@@ -34,20 +34,20 @@
 
         #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; display: none; align-items: center; justify-content: center; z-index: 100; font-size: 32px; font-weight: bold; }
         .rare-effect { color: gold; text-shadow: 0 0 20px gold; animation: shake 0.1s infinite; }
+        
+        /* SSR演出時の文字色を黄色に強化 */
         .ssr-effect {
-   　　      /* 背景を虹色にするアニメーション */
             background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff);
             background-size: 400% 400%;
             animation: rainbow 1s linear infinite, shake 0.1s infinite;
-    
-            /* 文字色を黄色（ゴールド）に変更 */
-            color: #fff352; 
-            /* 文字の輪郭をはっきりさせ、金色の光彩（グロー効果）を追加 */
+            color: #fff352 !important; /* 鮮やかな黄色 */
             text-shadow: 0 0 10px #ffa500, 0 0 20px #ffd700, 0 0 30px #ffffff;
-            -webkit-text-stroke: 1px #8b4513; /* 茶色の縁取りで高級感を出す */
+            -webkit-text-stroke: 1px #8b4513;
         }
         
         @keyframes shake { 0% { transform: translate(2px, 2px); } 100% { transform: translate(-2px, -2px); } }
+        @keyframes rainbow { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
+
         #flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; z-index: 2000; pointer-events: none; }
         .do-flash { animation: flashAnim 0.5s ease-out; }
         @keyframes flashAnim { 0% { opacity: 1; } 100% { opacity: 0; } }
@@ -58,14 +58,15 @@
         .super-shake { animation: superShake 0.4s infinite; }
         @keyframes superShake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-3px, -2px); } 100% { transform: translate(2px, 2px); } }
 
-        #single-card-display { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 150; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        /* z-indexを上げて、overlayより手前に表示させる */
+        #single-card-display { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .single-card-inner { width: 240px; height: 340px; background: #333; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        #single-card-display.active { display: flex; }
     </style>
 </head>
 <body id="main-body">
 
-<div id="new-character-overlay" onclick="resumeGacha()">
-    </div>
+<div id="new-character-overlay" onclick="resumeGacha()"></div>
 
 <div id="lobby-screen" class="screen active">
     <h1>伝説の召喚</h1>
@@ -104,7 +105,7 @@
     let lastCount = 1;
     let ownedChars = new Set(); 
     let resolveGachaWait = null;
-    let canClickToNext = false; // クリック許可フラグ
+    let canClickToNext = false; 
 
     const charData = {
         ssr: [
@@ -124,13 +125,10 @@
         ]
     };
 
-    // ガチャ演出を閉じて次へ進む
     function resumeGacha() {
-        if (!canClickToNext) return; // 演出の溜め（セリフ中など）は無視
-    
+        if (!canClickToNext) return; 
         newOverlay.style.display = 'none';
-        newOverlay.style.pointerEvents = 'none'; // 背後のカードを触れるようにする
-    
+        newOverlay.style.pointerEvents = 'none'; 
         if (resolveGachaWait) {
             const resolve = resolveGachaWait;
             resolveGachaWait = null;
@@ -138,14 +136,11 @@
         }
     }
 
-    
-    // 1枚ずつ表示ループの中の演出開始部分を修正
     async function startGacha(count) {
         lastCount = count;
         const results = [];
         let topRarity = "r";
 
-        // 1. 抽選
         for (let i = 0; i < count; i++) {
             const rand = Math.random();
             let rarity = rand < 0.05 ? "ssr" : (rand < 0.25 ? "sr" : "r");
@@ -159,7 +154,6 @@
             results.push({ ...char, rarity, isNew });
         }
 
-        // 2. 導入演出
         overlay.style.display = "flex";
         overlay.className = "";
         overlay.innerText = "召喚中...";
@@ -169,6 +163,7 @@
         if (topRarity === "ssr") {
             overlay.innerText = "超絶激レア反応！！";
             overlay.classList.add('ssr-effect');
+            // 文字色を黄色に保つためstyle.colorは指定しない(CSSに任せる)
             flashOverlay.classList.add('do-flash');
             setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
             await new Promise(r => setTimeout(r, 1500));
@@ -184,31 +179,29 @@
         resultContainer.innerHTML = "";
         resultContainer.style.gridTemplateColumns = count === 1 ? "1fr" : "repeat(5, 1fr)";
 
-        // 3. カード表示ループ
         for (let item of results) {
             
-            // 【ランダム昇格演出】
-            if (Math.random() < 0.1 && item.rarity !== "ssr") {
+            // 【昇格演出：SRからSSRのみに修正】
+            if (Math.random() < 0.1 && item.rarity === "sr") {
                 overlay.style.display = "flex";
                 overlay.className = "";
                 overlay.innerText = "！？";
                 overlay.style.color = "gold";
                 await new Promise(r => setTimeout(r, 600));
                 
-                item.rarity = (item.rarity === "r") ? "sr" : "ssr";
-                overlay.innerText = "昇格！！";
+                item.rarity = "ssr"; // SRからSSRへ
+                overlay.innerText = "SSRに昇格！！";
+                overlay.classList.add('ssr-effect');
                 await new Promise(r => setTimeout(r, 800));
                 overlay.style.display = "none";
             }
 
-            // 【SSR確定演出 & NEW演出】
             if (item.rarity === "ssr" || item.isNew) {
                 canClickToNext = false; 
                 newOverlay.style.display = 'flex';
-                newOverlay.style.pointerEvents = 'auto'; // クリックを受け付ける
+                newOverlay.style.pointerEvents = 'auto'; 
                 
                 if (item.rarity === "ssr") {
-                    // SSRはセリフ先行
                     newOverlay.innerHTML = `<div class="quote-text">「${item.quote}」</div>`;
                     body.classList.add('super-shake');
                     await new Promise(r => setTimeout(r, 1500));
@@ -217,7 +210,6 @@
                     setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
                 }
 
-                // 詳細情報の表示
                 newOverlay.innerHTML = `
                     <div class="huge-rarity" style="color:${item.rarity==='ssr'?'gold':'#f5576c'}">${item.rarity.toUpperCase()}</div>
                     <div class="huge-icon">${item.icon}</div>
@@ -226,28 +218,25 @@
                     <div class="tap-to-close">- TOUCH TO SCREEN -</div>
                 `;
                 
-                await new Promise(r => setTimeout(r, 500)); // 少しだけ待ってから
-                canClickToNext = true; // クリック解禁
+                await new Promise(r => setTimeout(r, 500));
+                canClickToNext = true; 
                 await new Promise(resolve => { resolveGachaWait = resolve; });
             }
 
-            // 一覧にカードを追加
             const card = document.createElement('div');
             card.className = `card ${item.rarity}`;
-            card.style.pointerEvents = 'auto'; // カードがクリック可能であることを保証
             card.innerHTML = `
                 <div style="font-size: 40px;">${item.icon}</div>
                 <div style="font-size: 14px; margin-top: 10px;">${item.rarity.toUpperCase()}</div>
                 ${item.isNew ? '<div class="new-badge">NEW!</div>' : ''}
             `;
 
-            // ここが重要：確実に詳細表示を呼ぶ
+            // クリックイベントを1つに統合して確実に動作させる
             card.onclick = (e) => {
-                e.stopPropagation(); // 他のイベントと干渉しないように
+                e.stopPropagation();
                 showDetail(item);
             };
             
-            card.onclick = () => showDetail(item);
             resultContainer.appendChild(card);
             await new Promise(r => setTimeout(r, 50));
             card.classList.add('show-card');
