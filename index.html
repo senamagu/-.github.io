@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ガチャシミュレーター</title>
+    <style>
+        body { background: #222; color: white; font-family: sans-serif; text-align: center; }
+        .container { padding: 20px; }
+        
+        /* カードが並ぶエリア */
+        #result-area {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); /* 5列ずつ表示 */
+            gap: 10px;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        /* カードの基本デザイン */
+        .card {
+            height: 120px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            background: #444;
+            transition: transform 0.2s;
+        }
+
+        /* レアリティ別の色付け */
+        .r   { background: #888; color: #eee; }
+        .sr  { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border: 2px solid #ff00ff; }
+        .ssr { background: linear-gradient(45deg, #fccb90 0%, #d57eeb 100%); border: 3px solid gold; box-shadow: 0 0 15px gold; }
+
+        button {
+            padding: 15px 30px; font-size: 18px; cursor: pointer;
+            background: #ffaa00; border: none; border-radius: 50px; font-weight: bold;
+        }
+        button:active { transform: scale(0.95); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>10連ガチャ</h1>
+    <button onclick="playGacha()">10連を引く！</button>
+    <div id="result-area">
+        </div>
+</div>
+
+<script>
+function playGacha() {
+    const area = document.getElementById('result-area');
+    area.innerHTML = ""; // 前の結果をクリア
+
+    const rates = { ssr: 0.03, sr: 0.17 }; // Rは残り80%
+
+    for (let i = 0; i < 10; i++) {
+        const rand = Math.random();
+        let rarity = "r";
+        let label = "R";
+
+        if (rand < rates.ssr) {
+            rarity = "ssr";
+            label = "SSR!!";
+        } else if (rand < rates.ssr + rates.sr) {
+            rarity = "sr";
+            label = "SR";
+        }
+
+        // HTML要素を作成して追加
+        const card = document.createElement('div');
+        card.className = `card ${rarity}`;
+        card.innerText = label;
+        area.appendChild(card);
+    }
+}
+</script>
+
+</body>
+</html>
