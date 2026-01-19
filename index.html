@@ -51,31 +51,45 @@
 </div>
 
 <script>
-function playGacha() {
+async function playGacha() {
     const area = document.getElementById('result-area');
-    area.innerHTML = ""; // 前の結果をクリア
+    const button = document.querySelector('button');
+    
+    // 準備：ボタンを無効化し、画面をリセット
+    button.disabled = true;
+    area.innerHTML = ""; 
 
-    const rates = { ssr: 0.03, sr: 0.17 }; // Rは残り80%
+    // 1. 溜め演出（仮でメッセージ表示）
+    const loadingMsg = document.createElement('div');
+    loadingMsg.innerText = "召喚中...";
+    loadingMsg.style.gridColumn = "1 / -1"; // 横いっぱいに表示
+    area.appendChild(loadingMsg);
 
+    // 1.5秒待機（ここでドキドキさせる）
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    loadingMsg.remove();
+
+    // 2. 抽選ロジック
+    const rates = { ssr: 0.03, sr: 0.17 };
+    const results = [];
     for (let i = 0; i < 10; i++) {
         const rand = Math.random();
-        let rarity = "r";
-        let label = "R";
-
-        if (rand < rates.ssr) {
-            rarity = "ssr";
-            label = "SSR!!";
-        } else if (rand < rates.ssr + rates.sr) {
-            rarity = "sr";
-            label = "SR";
-        }
-
-        // HTML要素を作成して追加
-        const card = document.createElement('div');
-        card.className = `card ${rarity}`;
-        card.innerText = label;
-        area.appendChild(card);
+        let rarity = rand < rates.ssr ? "ssr" : (rand < rates.ssr + rates.sr ? "sr" : "r");
+        results.push(rarity);
     }
+
+    // 3. 1枚ずつ順番に表示
+    for (const rarity of results) {
+        const card = document.createElement('div');
+        card.className = `card ${rarity} animate-in`; // アニメーション用クラス
+        card.innerText = rarity.toUpperCase();
+        area.appendChild(card);
+
+        // 0.2秒待ってから次のカードを出す
+        await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    button.disabled = false; // 終了後にボタンを戻す
 }
 </script>
 
