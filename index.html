@@ -20,7 +20,7 @@
         /* --- 結果画面 --- */
         #result-screen { background: #111; }
         #result-container { display: grid; gap: 15px; margin-bottom: 30px; min-height: 320px; align-items: center; justify-items: center; }
-        
+
         /* カードの初期状態（透明で下にある） */
         .card { 
             width: 100px; height: 140px; background: #333; border-radius: 8px;
@@ -28,6 +28,28 @@
             opacity: 0; transform: translateY(40px) scale(0.8); cursor: pointer;
             position: relative; /* NEWバッジ用 */
         }
+
+        /* 全画面の詳細表示（NEW演出用） */
+        #new-character-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95); /* 真っ暗な背景 */
+            z-index: 1000; /* 一番手前 */
+            display: none; /* 初期は非表示 */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer; /* 画面タップで進めるように */
+        }
+
+        /* キャラクター名やレア度の大きな表示 */
+        .huge-icon { font-size: 150px; margin-bottom: 20px; filter: drop-shadow(0 0 20px gold); }
+        .huge-rarity { font-size: 40px; color: gold; font-style: italic; font-weight: bold; }
+        .huge-name { font-size: 30px; margin-top: 10px; border-bottom: 2px solid white; padding-bottom: 10px; }
+        .tap-to-close { margin-top: 50px; font-size: 18px; animation: blink 1s infinite; }
+
+        @keyframes blink { 50% { opacity: 0; } }
 
         /* ふわっと出てくるアニメーション */
         .show-card { animation: cardAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
@@ -94,6 +116,13 @@
 </head>
 <body>
 
+<div id="new-character-overlay" onclick="resumeGacha()">
+    <div class="huge-rarity" id="huge-rarity">SSR</div>
+    <div class="huge-icon" id="huge-icon">🐉</div>
+    <div class="huge-name" id="huge-name">炎の竜王</div>
+    <div class="tap-to-close">- TOUCH TO SCREEN -</div>
+</div>
+    
 <div id="lobby-screen" class="screen active">
     <h1>伝説の召喚</h1>
     <div class="btn-group">
@@ -140,6 +169,7 @@
 
     let lastCount = 1;
     let ownedChars = new Set(); // 既に所持しているキャラ（絵文字）を管理
+    let resolveGachaWait; // 演出再開用の関数を保持する変数
 
     const charData = {
         ssr: [
@@ -171,6 +201,47 @@
         let topRarity = "r";
         let hasNew = false; // 今回の10連でNEWがあるか
 
+        let resolveGachaWait; // 演出再開用の関数を保持する変数
+
+    // ガチャ詳細画面を閉じて、次のカード表示へ進む関数
+    function resumeGacha() {
+        document.getElementById('new-character-overlay').style.display = 'none';
+        if (resolveGachaWait) resolveGachaWait(); // 待機状態を解除
+    }
+
+    for (let i = 0; i < results.length; i++) {
+        const item = results[i];
+
+        // --- NEW演出の割り込み ---
+        if (item.isNew) {
+            // 全画面表示にデータをセット
+            document.getElementById('huge-icon').innerText = item.icon;
+            document.getElementById('huge-rarity').innerText = item.rarity.toUpperCase();
+            document.getElementById('huge-name').innerText = item.name;
+            document.getElementById('new-character-overlay').style.display = 'flex';
+
+            // ユーザーが画面を叩くまで、ここで「止める」
+            await new Promise(resolve => {
+                resolveGachaWait = resolve; 
+            });
+        }
+
+        // --- 通常のカード表示（10連の枠に並べる） ---
+        const card = document.createElement('div');
+        card.className = `card ${item.rarity}`;
+        card.innerHTML = `
+            <div style="font-size: 40px;">${item.icon}</div>
+            <div style="font-size: 14px; margin-top: 10px;">${item.rarity.toUpperCase()}</div>
+            ${item.isNew ? '<div class="new-badge">NEW!</div>' : ''}
+        `;
+        resultContainer.appendChild(card);
+
+        await new Promise(r => setTimeout(r, 20)); 
+        card.classList.add('show-card');
+
+        await new Promise(r => setTimeout(r, 800 / count)); // 次のカードへ
+    }
+}
         for (let i = 0; i < count; i++) {
             const rand = Math.random();
             let rarity = "r";
@@ -248,6 +319,12 @@
         }
     }
 
+    // ガチャ詳細画面を閉じて、次のカード表示へ進む関数
+    function resumeGacha() {
+        document.getElementById('new-character-overlay').style.display = 'none';
+        if (resolveGachaWait) resolveGachaWait(); // 待機状態を解除
+    }
+    
     function toLobby() {
         resultScreen.classList.remove('active');
         lobbyScreen.classList.add('active');
