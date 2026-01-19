@@ -44,8 +44,33 @@
             background: black; display: none; align-items: center; justify-content: center;
             z-index: 100; font-size: 32px; font-weight: bold;
         }
-        .rare-effect { color: gold; text-shadow: 0 0 20px gold; animation: shake 0.1s infinite; }
-        @keyframes shake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-2px, -2px); } 100% { transform: translate(2px, -2px); } }
+        /* SSR用の虹色アニメーション */
+        .ssr-effect {
+            background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff);
+            background-size: 400% 400%;
+            animation: rainbow 1s linear infinite, shake 0.1s infinite;
+            color: white;
+            text-shadow: 0 0 20px #fff, 0 0 30px #ff00de;
+        }
+
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 画面フラッシュ */
+        .flash {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; opacity: 0; z-index: 200; pointer-events: none;
+        }
+        .do-flash {
+            animation: flashAnim 0.5s ease-out;
+        }
+        @keyframes flashAnim {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
     </style>
 </head>
 <body>
