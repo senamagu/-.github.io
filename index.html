@@ -21,19 +21,25 @@
             cursor: pointer;
         }
         /* 召喚の背景画像（ここに好きなURLを入れる） */
-        .gate-bg {
-            position: absolute; width: 100%; height: 100%;
-            background: url('./IMG_2619.jpeg'), linear-gradient(to bottom, #1a1a2e, #16213e);
-            background-size: cover;
-            transition: transform 1.2s cubic-bezier(0.7, 0, 0.3, 1), filter 0.8s;
-            z-index: 1;
-        }
-        /* ズームアップアニメーション */
-        .zoom-up-bg { 
-            transform: scale(8); /* 8倍に拡大して飛び込む感じ */
-            filter: brightness(3) blur(5px); /* 明るくしながらボカす */
-            opacity: 0; /* 最終的に消える */
-        }
+.gate-bg {
+    position: absolute; 
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: url('./IMG_2619.jpeg'), linear-gradient(to bottom, #1a1a2e, #16213e);
+    background-size: cover;
+    background-position: center; /* 中央固定 */
+    /* ズームの勢いを出すために cubic-bezier を調整 */
+    transition: transform 0.8s cubic-bezier(0.15, 0, 0.15, 1), filter 0.6s, opacity 0.8s;
+    z-index: 1;
+    transform: scale(1); /* 最初は等倍 */
+}
+
+/* タップした瞬間に自分の方へ突き抜けてくる演出 */
+.zoom-up-bg { 
+    transform: scale(10) !important; /* 10倍に巨大化 */
+    filter: brightness(2) blur(2px); /* 明るくしながら少しボカす */
+    opacity: 0; /* 最終的にプレイヤーを通り越して消えるイメージ */
+}
 
         .gate-text {
             position: relative; z-index: 2; font-size: 32px; font-weight: bold;
@@ -168,19 +174,25 @@
         lastCount = count;
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById('gate-screen').classList.add('active');
-        gateBg.classList.remove('zoom-up-bg'); // リセット
+        
+        // テキストと背景の状態を戻す
+        document.querySelector('.gate-text').style.display = 'block';
+        gateBg.classList.remove('zoom-up-bg'); 
     }
 
     // 待機画面をタップしてガチャ実行
     async function executeGacha() {
-        // 1. ズームアウト演出
+        // テキストを先に消して没入感を出す
+        document.querySelector('.gate-text').style.display = 'none';
+
+        // 1. ズームアップ（迫ってくる）発動
         gateBg.classList.add('zoom-up-bg');
         
-        // ワンテンポ遅れてホワイトアウト
-        await new Promise(r => setTimeout(r, 600));
+        // 背景が迫ってきて視界が埋まるタイミングでホワイトアウト
+        await new Promise(r => setTimeout(r, 400)); 
         flashOverlay.classList.add('do-flash');
         
-        // 完全に消える前に画面遷移
+        // 完全に光に包まれたら裏でガチャ結果を準備
         await new Promise(r => setTimeout(r, 400));
         startGacha(lastCount);
     }
