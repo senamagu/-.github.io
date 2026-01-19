@@ -15,21 +15,28 @@
         /* ロビー背景 */
         #lobby-screen { background: radial-gradient(circle, #0042A9, #000); }
 
-        /* --- 召喚待機画面 (Gate) --- */
-        #gate-screen { 
-            background: black; 
-            cursor: pointer;
-        }
-        /* 召喚の背景画像（ここに好きなURLを入れる） */
-        .gate-bg {
-            position: absolute; width: 100%; height: 100%;
-            background: url('https://www.transparenttextures.com/patterns/dark-matter.png'), linear-gradient(to bottom, #1a1a2e, #16213e);
-            background-size: cover;
-            transition: transform 1.2s cubic-bezier(0.7, 0, 0.3, 1), filter 1s;
-            z-index: 1;
-        }
-        /* ズームアウトアニメーション */
-        .zoom-out-bg { transform: scale(0.1); filter: brightness(5) blur(10px); }
+/* 召喚の背景画像（初期状態：少し大きめに配置） */
+    .gate-bg {
+        position: absolute; 
+        width: 110%; height: 110%; /* 少しデカめに設定 */
+        top: -5%; left: -5%;     /* 中央寄せ */
+        background-size: cover;
+        background-position: center;
+        /* transitionをtransformとfilterに限定 */
+        transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), filter 1s;
+        z-index: 1;
+    }
+
+    /* 1. 少し下がる（タメ） */
+    .gate-prepare { 
+        transform: scale(0.9); /* 0.1分小さくなるが、元の1.1倍あるので画面は切れない */
+    }
+
+    /* 2. ズームアップ（突入） */
+    .gate-zoom-in { 
+        transform: scale(3);   /* 一気に拡大 */
+        filter: brightness(3) blur(5px); /* 発光しながらボヤける */
+    }
 
         .gate-text {
             position: relative; z-index: 2; font-size: 32px; font-weight: bold;
@@ -135,6 +142,12 @@
     const newOverlay = document.getElementById('new-character-overlay');
     const body = document.getElementById('main-body');
     const gateBg = document.getElementById('gate-bg');
+    // 背景画像の定義（好きなURLに変更してください）
+    const BG_IMAGES = {
+        default: 'url("https://www.transparenttextures.com/patterns/dark-matter.png")', // 通常（R）
+        sr: 'url("https://www.transparenttextures.com/patterns/asfalt-dark.png")',      // SR確定
+        ssr: 'url("https://www.transparenttextures.com/patterns/carbon-fibre.png")'    // SSR確定
+    };
 
     let lastCount = 1;
     let ownedChars = new Set(); 
@@ -162,21 +175,40 @@
     // ロビーから待機画面へ移動
     function prepareGacha(count) {
         lastCount = count;
+        let topRarity = "r";
+        for (let i = 0; i < count; i++) {
+            const rand = Math.random();
+            let rarity = rand < 0.05 ? "ssr" : (rand < 0.25 ? "sr" : "r");
+            if (rarity === "ssr") topRarity = "ssr";
+            else if (rarity === "sr" && topRarity !== "ssr") topRarity = "sr";
+        }
+        // 背景画像をセット
+        gateBg.style.backgroundImage = BG_IMAGES[topRarity] || BG_IMAGES.default;
+        // 中身の結果はstartGachaに引き継ぐために一時保存するか、
+        // もしくはここでは背景の決定のみを行い、実際の抽選はstartGachaに任せる形にします。
+        // 今回は「背景だけいじる」ため、見た目の切り替えを優先します。
+
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById('gate-screen').classList.add('active');
-        gateBg.classList.remove('zoom-out-bg'); // リセット
+        
+        // アニメーション用クラスをリセット
+        gateBg.classList.remove('gate-prepare', 'gate-zoom-in');
     }
 
     // 待機画面をタップしてガチャ実行
     async function executeGacha() {
-        // 1. ズームアウト演出
-        gateBg.classList.add('zoom-out-bg');
+        // 1. 少し下がる（タメ）
+        gateBg.classList.add('gate-prepare');
+        await new Promise(r => setTimeout(r, 400)); // タメの時間
+
+        // 2. ズームアップ（突入）
+        gateBg.classList.remove('gate-prepare');
+        gateBg.classList.add('gate-zoom-in');
         
-        // ワンテンポ遅れてホワイトアウト
-        await new Promise(r => setTimeout(r, 800));
+        // ホワイトアウト
+        await new Promise(r => setTimeout(r, 600));
         flashOverlay.classList.add('do-flash');
         
-        // 完全に消える前に画面遷移
         await new Promise(r => setTimeout(r, 400));
         startGacha(lastCount);
     }
