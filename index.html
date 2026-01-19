@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>ソシャゲ風ガチャ（自動めくり版）</title>
+    <title>ソシャゲ風ガチャ（召喚儀式版）</title>
     <style>
         body { background: #222; color: white; font-family: sans-serif; margin: 0; overflow: hidden; text-align: center; }
         .screen { display: none; width: 100vw; height: 100vh; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
@@ -12,67 +12,87 @@
         button:hover { transform: scale(1.1); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
         .btn-group { display: flex; gap: 20px; margin-top: 20px; }
 
+        /* ロビー背景 */
         #lobby-screen { background: radial-gradient(circle, #0042A9, #000); }
 
         /* --- 召喚待機画面 (Gate) --- */
-        #gate-screen { background: black; cursor: pointer; }
+        #gate-screen { 
+            background: black; 
+            cursor: pointer;
+        }
+        /* 召喚の背景画像（ここに好きなURLを入れる） */
         .gate-bg {
             position: absolute; width: 100%; height: 100%;
-            background-size: cover; background-position: center;
-            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), filter 0.8s;
+            background: url('https://www.transparenttextures.com/patterns/dark-matter.png'), linear-gradient(to bottom, #1a1a2e, #16213e);
+            background-size: cover;
+            transition: transform 1.2s cubic-bezier(0.7, 0, 0.3, 1), filter 1s;
             z-index: 1;
         }
-        /* タップ時のズームアップ */
-        .zoom-up-bg { transform: scale(3); filter: brightness(2); }
+        /* ズームアウトアニメーション */
+        .zoom-out-bg { transform: scale(0.1); filter: brightness(5) blur(10px); }
 
         .gate-text {
             position: relative; z-index: 2; font-size: 32px; font-weight: bold;
-            letter-spacing: 5px; animation: pulse 2s infinite; text-shadow: 0 0 20px rgba(255,255,255,0.8);
+            letter-spacing: 5px; animation: pulse 2s infinite; text-shadow: 0 0 20px #00bcd4;
         }
         @keyframes pulse { 0%, 100% { opacity: 0.3; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.05); } }
 
         /* 結果画面 */
+        #result-screen { background: #111; }
         #result-container { display: grid; gap: 15px; margin-bottom: 30px; min-height: 320px; align-items: center; justify-items: center; }
 
-        /* カードの演出 */
-        .card-wrapper { width: 100px; height: 140px; perspective: 600px; opacity: 0; transform: translateY(20px); }
-        .show-wrapper { animation: wrapperAppear 0.4s forwards; }
+        /* カードの演出（既存継承） */
+        .card-wrapper { width: 100px; height: 140px; perspective: 600px; opacity: 0; transform: translateY(40px); }
+        .show-wrapper { animation: wrapperAppear 0.5s forwards; }
         @keyframes wrapperAppear { to { opacity: 1; transform: translateY(0); } }
-        
-        .card { width: 100%; height: 100%; position: relative; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
+        .card { width: 100%; height: 100%; position: relative; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; cursor: pointer; }
         .is-flipped { transform: rotateY(180deg); }
         .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .card-back { background: #444; border: 2px solid #666; background-image: repeating-linear-gradient(45deg, #333 0, #333 10px, #444 10px, #444 20px); }
         .card-front { transform: rotateY(180deg); background: #333; }
-        
         .back-sr { border: 2px solid #f5576c; box-shadow: 0 0 15px #f5576c; }
-        .back-ssr { border: 2px solid gold; box-shadow: 0 0 20px gold; }
-        .sr { border: 2px solid #f5576c; box-shadow: 0 0 15px #f5576c; }
+        .back-ssr { border: 2px solid gold; box-shadow: 0 0 20px gold; animation: goldPulse 1s infinite alternate; }
+        @keyframes goldPulse { from { box-shadow: 0 0 10px gold; } to { box-shadow: 0 0 25px gold; } }
+        .r { border: 1px solid #666; }
+        .sr { border: 2px solid #f5576c; box-shadow: 0 0 15px #f5576c; background: #442222; }
         .ssr { border: 3px solid gold; box-shadow: 0 0 25px gold; background: #444422; }
-
         .new-badge { position: absolute; top: -10px; right: -10px; background: #00bcd4; color: white; border-radius: 50%; padding: 5px 8px; font-size: 10px; font-weight: bold; transform: rotate(15deg); z-index: 10; }
 
-        /* 特殊演出レイヤー (NEWキャラ・SSR) */
-        #new-character-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0, 0, 0, 0.95); z-index: 1000; display: none; 
-            flex-direction: column; align-items: center; justify-content: center;
-            cursor: pointer; pointer-events: auto; /* 反応するように修正 */
+        /* 特殊演出レイヤー */
+        #new-character-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 1000; display: none; pointer-events: none; flex-direction: column; align-items: center; justify-content: center; }
+        .huge-icon { font-size: 150px; margin-bottom: 20px; filter: drop-shadow(0 0 20px gold); }
+        .huge-rarity { font-size: 40px; color: gold; font-style: italic; font-weight: bold; }
+        .huge-name { font-size: 30px; margin-top: 10px; border-bottom: 2px solid white; padding-bottom: 10px; }
+        .tap-to-close { margin-top: 50px; font-size: 18px; animation: blink 1s infinite; color: #aaa; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; display: none; align-items: center; justify-content: center; z-index: 100; font-size: 32px; font-weight: bold; }
+        .rare-effect { color: gold; text-shadow: 0 0 20px gold; animation: shake 0.1s infinite; }
+        .ssr-effect { 
+            background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff); 
+            background-size: 400% 400%; animation: rainbow 1s linear infinite, shake 0.1s infinite; 
+            color: #fff352 !important; text-shadow: 0 0 10px #ffa500, 0 0 20px #ffd700; -webkit-text-stroke: 1px #8b4513;
         }
-        
-        .quote-text { font-size: 28px; font-style: italic; color: white; text-shadow: 0 0 15px gold; margin-bottom: 20px; animation: quoteIn 0.8s ease-out forwards; }
-        @keyframes quoteIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .huge-icon { font-size: 150px; filter: drop-shadow(0 0 20px gold); }
-        
+        @keyframes shake { 0% { transform: translate(2px, 2px); } 100% { transform: translate(-2px, -2px); } }
+        @keyframes rainbow { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
+
         #flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; z-index: 2000; pointer-events: none; }
         .do-flash { animation: flashAnim 0.5s ease-out; }
         @keyframes flashAnim { 0% { opacity: 1; } 100% { opacity: 0; } }
 
-        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; display: none; align-items: center; justify-content: center; z-index: 100; font-size: 32px; font-weight: bold; }
+        .quote-text { font-size: 28px; font-style: italic; color: white; text-shadow: 0 0 15px gold; margin-bottom: 20px; animation: quoteIn 0.8s ease-out forwards; }
+        @keyframes quoteIn { from { opacity: 0; transform: scale(1.2); } to { opacity: 1; transform: scale(1); } }
+        .super-shake { animation: superShake 0.4s infinite; }
+        @keyframes superShake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-3px, -2px); } 100% { transform: translate(2px, 2px); } }
+
+        #single-card-display { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .single-card-inner { width: 240px; height: 340px; background: #333; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+
+        .huge-card-wrapper { perspective: 1000px; margin-bottom: 20px; width: 200px; height: 280px; }
+        #huge-card-inner { width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     </style>
 </head>
-<body>
+<body id="main-body">
 
 <div id="new-character-overlay" onclick="resumeGacha()"></div>
 
@@ -90,12 +110,21 @@
 </div>
 
 <div id="flash-overlay"></div>
-<div id="overlay"></div>
+<div id="overlay">召喚中...</div>
 
 <div id="result-screen" class="screen">
     <div id="result-container"></div>
     <div class="btn-group">
-        <button onclick="location.reload()">戻る</button>
+        <button onclick="toLobby()">戻る</button>
+        <button id="retry-btn" onclick="prepareGacha(lastCount)" style="background: #ffaa00; color: white;">もう一度</button>
+    </div>
+</div>
+
+<div id="single-card-display" onclick="closeSingleCardDisplay()">
+    <div class="single-card-inner r" id="detail-inner">
+        <div id="card-detail-icon" style="font-size: 80px;"></div>
+        <div id="card-detail-rarity" style="font-size: 24px; font-weight: bold; margin-top: 10px;"></div>
+        <div id="card-detail-name" style="font-size: 18px; color: #ccc;"></div>
     </div>
 </div>
 
@@ -104,90 +133,124 @@
     const overlay = document.getElementById('overlay');
     const flashOverlay = document.getElementById('flash-overlay');
     const newOverlay = document.getElementById('new-character-overlay');
+    const body = document.getElementById('main-body');
     const gateBg = document.getElementById('gate-bg');
 
     let lastCount = 1;
     let ownedChars = new Set(); 
     let resolveGachaWait = null;
-
-    // --- 背景画像のURL設定 ---
-    const bgImages = {
-        r:   './IMG_R.jpeg',   // R確定（通常）
-        sr:  './IMG_SR.jpeg',  // SR確定
-        ssr: './IMG_SSR.jpeg'  // SSR確定
-    };
+    let canClickToNext = false; 
 
     const charData = {
         ssr: [
             { id: "dragon", icon: "🐉", name: "炎の竜王", quote: "我が焔に焼け焦げるがいい！" },
-            { id: "queen", icon: "👸", name: "光の女王", quote: "希望の光よ、世界を照らして。" }
+            { id: "queen", icon: "👸", name: "光 of 女王", quote: "希望の光よ、世界を照らして。" },
+            { id: "diamond", icon: "💎", name: "蒼穹の宝珠", quote: "この輝き、誰にも渡さない。" }
         ],
         sr: [
             { id: "sword", icon: "⚔️", name: "勇者の剣", quote: "この一撃で決める！" },
+            { id: "shield", icon: "🛡️", name: "守護者の盾", quote: "ここは一歩も通さないぜ。" },
             { id: "fire", icon: "🔥", name: "灼熱の精霊", quote: "もっと熱くしてやるよ！" }
         ],
         r: [
             { id: "plant", icon: "🌿", name: "草原の番人", quote: "風が吹いているね。" },
+            { id: "wood", icon: "🪵", name: "森の木こり", quote: "良い材木が採れそうだ。" },
             { id: "bone", icon: "🦴", name: "彷徨う魂", quote: "私は…どこにいるのだ…" }
         ]
     };
 
+    // ロビーから待機画面へ移動
     function prepareGacha(count) {
         lastCount = count;
-        // 事前に抽選して最高レアリティを判定
-        const results = [];
-        let maxRarity = "r";
-        for(let i=0; i<count; i++){
-            const rand = Math.random();
-            let rarity = rand < 0.05 ? "ssr" : (rand < 0.25 ? "sr" : "r");
-            if (rarity === "ssr") maxRarity = "ssr";
-            else if (rarity === "sr" && maxRarity !== "ssr") maxRarity = "sr";
-            
-            const pool = charData[rarity];
-            const char = pool[Math.floor(Math.random() * pool.length)];
-            results.push({...char, rarity, isNew: !ownedChars.has(char.id)});
-            ownedChars.add(char.id);
-        }
-        
-        // レアリティに応じた背景を設定
-        gateBg.style.backgroundImage = `url('${bgImages[maxRarity]}')`;
-        
-        window.currentGachaResults = results; // 結果を一時保存
-
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById('gate-screen').classList.add('active');
-        gateBg.classList.remove('zoom-up-bg');
+        gateBg.classList.remove('zoom-out-bg'); // リセット
     }
 
+    // 待機画面をタップしてガチャ実行
     async function executeGacha() {
-        // 1. ズームアップ演出
-        gateBg.classList.add('zoom-up-bg');
+        // 1. ズームアウト演出
+        gateBg.classList.add('zoom-out-bg');
         
-        await new Promise(r => setTimeout(r, 600));
+        // ワンテンポ遅れてホワイトアウト
+        await new Promise(r => setTimeout(r, 800));
         flashOverlay.classList.add('do-flash');
         
+        // 完全に消える前に画面遷移
         await new Promise(r => setTimeout(r, 400));
-        startGachaDisplay(window.currentGachaResults);
+        startGacha(lastCount);
     }
 
     function resumeGacha() {
+        if (!canClickToNext) return; 
         newOverlay.style.display = 'none';
+        newOverlay.style.pointerEvents = 'none';
         if (resolveGachaWait) resolveGachaWait();
     }
 
-    async function startGachaDisplay(results) {
+    async function startGacha(count) {
+        const results = [];
+        let topRarity = "r";
+
+        for (let i = 0; i < count; i++) {
+            const rand = Math.random();
+            let rarity = rand < 0.05 ? "ssr" : (rand < 0.25 ? "sr" : "r");
+            if (rarity === "ssr") topRarity = "ssr";
+            else if (rarity === "sr" && topRarity !== "ssr") topRarity = "sr";
+
+            const pool = charData[rarity];
+            const char = pool[Math.floor(Math.random() * pool.length)];
+            const isNew = !ownedChars.has(char.id);
+            if (isNew) ownedChars.add(char.id);
+            results.push({ ...char, rarity, isNew });
+        }
+
+        // 導入演出
+        overlay.style.display = "flex";
+        overlay.className = "";
+        overlay.innerText = "召喚中...";
+        overlay.style.color = "white";
+        
         document.getElementById('gate-screen').classList.remove('active');
+        await new Promise(r => setTimeout(r, 600));
+
+        if (topRarity === "ssr") {
+            overlay.innerText = "超絶激レア反応！！";
+            overlay.classList.add('ssr-effect');
+            flashOverlay.classList.add('do-flash');
+            setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
+            await new Promise(r => setTimeout(r, 1500));
+        } else if (topRarity === "sr") {
+            overlay.innerText = "高エネルギー反応！";
+            overlay.classList.add('rare-effect');
+            await new Promise(r => setTimeout(r, 1000));
+        }
+
+        overlay.style.display = "none";
         document.getElementById('result-screen').classList.add('active');
         resultContainer.innerHTML = "";
-        resultContainer.style.gridTemplateColumns = results.length === 1 ? "1fr" : "repeat(5, 1fr)";
+        resultContainer.style.gridTemplateColumns = count === 1 ? "1fr" : "repeat(5, 1fr)";
 
+        // カード表示ループ
         for (let item of results) {
+            // 昇格演出
+            if (Math.random() < 0.1 && item.rarity === "sr") {
+                overlay.style.display = "flex";
+                overlay.className = "";
+                overlay.innerText = "！？";
+                overlay.style.color = "gold";
+                await new Promise(r => setTimeout(r, 600));
+                item.rarity = "ssr";
+                overlay.innerText = "SSRに昇格！！";
+                overlay.classList.add('ssr-effect');
+                await new Promise(r => setTimeout(r, 800));
+                overlay.style.display = "none";
+            }
+
             const wrapper = document.createElement('div');
             wrapper.className = "card-wrapper";
-            
             const cardInner = document.createElement('div');
             cardInner.className = "card";
-            
             const back = document.createElement('div');
             back.className = "card-back";
             if (item.rarity === "ssr") back.classList.add('back-ssr');
@@ -206,31 +269,95 @@
             wrapper.appendChild(cardInner);
             resultContainer.appendChild(wrapper);
 
-            // カード出現
-            await new Promise(r => {
-                wrapper.classList.add('show-wrapper');
-                setTimeout(r, 200);
-            });
+            await new Promise(r => setTimeout(r, 50));
+            wrapper.classList.add('show-wrapper');
+            await new Promise(r => setTimeout(r, 300 / count));
 
-            // 自動めくり
-            await new Promise(r => setTimeout(r, 100));
-            cardInner.classList.add('is-flipped');
-
-            // SSRまたはNEWの場合のセリフ演出
+            // 特殊演出
             if (item.rarity === "ssr" || item.isNew) {
-                await new Promise(resolve => {
-                    resolveGachaWait = resolve;
-                    newOverlay.innerHTML = `
-                        <div class="quote-text">「${item.quote}」</div>
-                        <div class="huge-icon">${item.icon}</div>
-                        <div style="color:gold; font-size:24px; margin-top:20px;">${item.name}</div>
-                        <div style="color:#aaa; margin-top:30px;">- CLICK TO CONTINUE -</div>
+                canClickToNext = false;
+                newOverlay.style.display = 'flex';
+                newOverlay.style.pointerEvents = 'auto';
+                newOverlay.innerHTML = "";
+
+                if (item.rarity === "ssr") {
+                    newOverlay.style.background = "white"; 
+                    const quoteDiv = document.createElement('div');
+                    quoteDiv.className = 'quote-text';
+                    quoteDiv.style.fontSize = "36px";
+                    quoteDiv.style.color = "#555"; 
+                    quoteDiv.style.textShadow = "0 0 5px rgba(0,0,0,0.2)";
+                    quoteDiv.style.transition = "all 0.3s ease";
+                    quoteDiv.innerText = `「${item.quote}」`;
+                    newOverlay.appendChild(quoteDiv);
+
+                    body.classList.add('super-shake');
+                    await new Promise(r => setTimeout(r, 1500));
+                    body.classList.remove('super-shake');
+
+                    flashOverlay.classList.add('do-flash');
+                    newOverlay.style.background = "rgba(0, 0, 0, 0.95)"; 
+                    quoteDiv.style.color = "white";
+                    quoteDiv.style.textShadow = "0 0 15px gold, 0 0 30px gold";
+                    quoteDiv.style.fontSize = "32px";
+                    setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
+
+                    const charInfo = document.createElement('div');
+                    charInfo.innerHTML = `
+                        <div class="huge-icon" style="font-size:180px;">${item.icon}</div>
+                        <div class="huge-rarity" style="color:gold; font-size:50px;">${item.rarity.toUpperCase()}</div>
+                        <div class="huge-name">${item.name}</div>
+                        <div class="tap-to-close">- TOUCH TO SCREEN -</div>
                     `;
-                    newOverlay.style.display = "flex";
-                });
+                    newOverlay.appendChild(charInfo);
+                } else {
+                    newOverlay.innerHTML = `
+                        <div class="huge-card-wrapper">
+                            <div class="card" id="huge-card-inner">
+                                <div class="card-back back-sr" style="width:200px; height:280px;"></div>
+                                <div class="card-front ${item.rarity}" style="width:200px; height:280px; transform: rotateY(180deg);">
+                                    <div style="font-size: 100px;">${item.icon}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="huge-rarity" style="color:#f5576c">${item.rarity.toUpperCase()}</div>
+                        <div class="huge-name">${item.name}</div>
+                        <div class="tap-to-close">- TOUCH TO SCREEN -</div>
+                    `;
+                    await new Promise(r => setTimeout(r, 300));
+                    document.getElementById('huge-card-inner').classList.add('is-flipped');
+                }
+
+                canClickToNext = true;
+                await new Promise(resolve => { resolveGachaWait = resolve; });
+                cardInner.classList.add('is-flipped');
+            } else {
+                await new Promise(r => setTimeout(r, 100));
+                cardInner.classList.add('is-flipped');
             }
-            await new Promise(r => setTimeout(r, 200));
+
+            cardInner.onclick = (e) => {
+                e.stopPropagation();
+                showDetail(item);
+            };
         }
+    }
+
+    function showDetail(item) {
+        document.getElementById('card-detail-icon').innerText = item.icon;
+        document.getElementById('card-detail-rarity').innerText = item.rarity.toUpperCase();
+        document.getElementById('card-detail-name').innerText = item.name;
+        document.getElementById('detail-inner').className = `single-card-inner ${item.rarity}`;
+        document.getElementById('single-card-display').style.display = 'flex';
+    }
+
+    function closeSingleCardDisplay() {
+        document.getElementById('single-card-display').style.display = 'none';
+    }
+
+    function toLobby() {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('lobby-screen').classList.add('active');
         flashOverlay.classList.remove('do-flash');
     }
 </script>
