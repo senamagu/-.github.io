@@ -25,7 +25,7 @@
         .ssr { border: 3px solid gold; box-shadow: 0 0 25px gold; background: #444422; }
         .new-badge { position: absolute; top: -10px; right: -10px; background: #00bcd4; color: white; border-radius: 50%; padding: 5px 8px; font-size: 10px; font-weight: bold; transform: rotate(15deg); z-index: 10; }
 
-        #new-character-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        #new-character-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 1000; display: none; pointer-events: none; flex-direction: column; align-items: center; justify-content: center; }
         .huge-icon { font-size: 150px; margin-bottom: 20px; filter: drop-shadow(0 0 20px gold); }
         .huge-rarity { font-size: 40px; color: gold; font-style: italic; font-weight: bold; }
         .huge-name { font-size: 30px; margin-top: 10px; border-bottom: 2px solid white; padding-bottom: 10px; }
@@ -124,12 +124,22 @@
         ]
     };
 
+    // ガチャ演出を閉じて次へ進む
     function resumeGacha() {
-        if (!canClickToNext) return; // 許可されてない時は何もしない
+        if (!canClickToNext) return; // 演出の溜め（セリフ中など）は無視
+    
         newOverlay.style.display = 'none';
-        if (resolveGachaWait) resolveGachaWait();
+        newOverlay.style.pointerEvents = 'none'; // 背後のカードを触れるようにする
+    
+        if (resolveGachaWait) {
+            const resolve = resolveGachaWait;
+            resolveGachaWait = null;
+            resolve();
+        }
     }
 
+    
+    // 1枚ずつ表示ループの中の演出開始部分を修正
     async function startGacha(count) {
         lastCount = count;
         const results = [];
@@ -193,14 +203,15 @@
 
             // 【SSR確定演出 & NEW演出】
             if (item.rarity === "ssr" || item.isNew) {
-                canClickToNext = false; // 演出中はクリック禁止
+                canClickToNext = false; 
                 newOverlay.style.display = 'flex';
+                newOverlay.style.pointerEvents = 'auto'; // クリックを受け付ける
                 
                 if (item.rarity === "ssr") {
                     // SSRはセリフ先行
                     newOverlay.innerHTML = `<div class="quote-text">「${item.quote}」</div>`;
                     body.classList.add('super-shake');
-                    await new Promise(r => setTimeout(r, 1500));
+                    await new Promise(r => setTimeout(r, 500));
                     body.classList.remove('super-shake');
                     flashOverlay.classList.add('do-flash');
                     setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
