@@ -25,15 +25,34 @@
     position: absolute; 
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: url('./IMG_2619.jpeg'), linear-gradient(to bottom, #1a1a2e, #16213e);
+    background: url('./background/R.jpeg'), linear-gradient(to bottom, #1a1a2e, #16213e);
     background-size: cover;
-    background-position: center; /* 中央固定 */
-    /* ズームの勢いを出すために cubic-bezier を調整 */
-    transition: transform 0.8s cubic-bezier(0.15, 0, 0.15, 1), filter 0.6s, opacity 0.8s;
+    background-position: center;
     z-index: 1;
-    transform: scale(1); /* 最初は等倍 */
+    transform: scale(1);
 }
 
+/* タップ後の「タメ」と「突入」のアニメーション */
+.gate-zoom-animation {
+    animation: gateAction 2.2s cubic-bezier(0.45, 0, 0.55, 1) forwards;
+}
+
+@keyframes gateAction {
+    0% { transform: scale(1); filter: brightness(1); }
+    /* 1. 少しズームアウトして「タメ」を作る（0.6秒かけて少し遠ざかる） */
+    30% { transform: scale(0.9); filter: brightness(0.8); }
+    /* 2. 一気にズームイン（ここから一気に加速して迫ってくる） */
+    100% { transform: scale(15); filter: brightness(5) blur(10px); opacity: 0; }
+}
+
+/* テキストも一緒に消えるアニメーション */
+.fade-out {
+    animation: textFade 0.5s forwards;
+}
+@keyframes textFade {
+    to { opacity: 0; transform: scale(0.8); }
+}
+        
 /* タップした瞬間に自分の方へ突き抜けてくる演出 */
 .zoom-up-bg { 
     transform: scale(10) !important; /* 10倍に巨大化 */
@@ -169,31 +188,38 @@
         ]
     };
 
-    // ロビーから待機画面へ移動
+    // 戻る時のリセット処理
     function prepareGacha(count) {
         lastCount = count;
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById('gate-screen').classList.add('active');
         
-        // テキストと背景の状態を戻す
-        document.querySelector('.gate-text').style.display = 'block';
-        gateBg.classList.remove('zoom-up-bg'); 
+        // アニメーションクラスをリセット
+        gateBg.classList.remove('gate-zoom-animation'); 
+        const gateText = document.querySelector('.gate-text');
+        gateText.classList.remove('fade-out');
+        gateText.style.display = 'block';
     }
 
-    // 待機画面をタップしてガチャ実行
+// 待機画面をタップしてガチャ実行
     async function executeGacha() {
-        // テキストを先に消して没入感を出す
-        document.querySelector('.gate-text').style.display = 'none';
+        if (gateBg.classList.contains('gate-zoom-animation')) return; // 二重タップ防止
 
-        // 1. ズームアップ（迫ってくる）発動
-        gateBg.classList.add('zoom-up-bg');
+        // 1. テキストをフェードアウト
+        const gateText = document.querySelector('.gate-text');
+        gateText.classList.add('fade-out');
+
+        // 2. 「ズームアウト → ズームイン」のアニメーション開始
+        gateBg.classList.add('gate-zoom-animation');
         
-        // 背景が迫ってきて視界が埋まるタイミングでホワイトアウト
-        await new Promise(r => setTimeout(r, 400)); 
+        // --- 演出のタイムライン ---
+        
+        // 1.2秒後：画面が迫ってきて視界が埋まり始める頃にフラッシュ開始
+        await new Promise(r => setTimeout(r, 1200));
         flashOverlay.classList.add('do-flash');
         
-        // 完全に光に包まれたら裏でガチャ結果を準備
-        await new Promise(r => setTimeout(r, 400));
+        // 2秒後：完全に光に包まれたタイミングで結果画面へ
+        await new Promise(r => setTimeout(r, 800));
         startGacha(lastCount);
     }
 
