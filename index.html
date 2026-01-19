@@ -15,17 +15,19 @@
         /* ロビー背景 */
         #lobby-screen { background: radial-gradient(circle, #0042A9, #000); }
 
-/* 召喚の背景画像（初期状態：少し大きめに配置） */
-    .gate-bg {
-        position: absolute; 
-        width: 110%; height: 110%; /* 少しデカめに設定 */
-        top: -5%; left: -5%;     /* 中央寄せ */
-        background-size: cover;
-        background-position: center;
-        /* transitionをtransformとfilterに限定 */
-        transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), filter 1s;
-        z-index: 1;
-    }
+/* 召喚の背景画像 */
+.gate-bg {
+    position: absolute; 
+    width: 110%; height: 110%; /* 余裕をもって120%に */
+    top: -5%; left: -5%;     /* 中央寄せ */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    /* 背景画像が変わる瞬間にパッと切り替わるよう、transformのみにtransitionをかける */
+    transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), filter 1s;
+    z-index: 1;
+    display: block; /* 確実に見えるように */
+}
 
     /* 1. 少し下がる（タメ） */
     .gate-prepare { 
@@ -173,27 +175,29 @@
     };
 
     // ロビーから待機画面へ移動
-    function prepareGacha(count) {
-        lastCount = count;
-        let topRarity = "r";
-        for (let i = 0; i < count; i++) {
-            const rand = Math.random();
-            let rarity = rand < 0.05 ? "ssr" : (rand < 0.25 ? "sr" : "r");
-            if (rarity === "ssr") topRarity = "ssr";
-            else if (rarity === "sr" && topRarity !== "ssr") topRarity = "sr";
-        }
-        // 背景画像をセット
-        gateBg.style.backgroundImage = BG_IMAGES[topRarity] || BG_IMAGES.default;
-        // 中身の結果はstartGachaに引き継ぐために一時保存するか、
-        // もしくはここでは背景の決定のみを行い、実際の抽選はstartGachaに任せる形にします。
-        // 今回は「背景だけいじる」ため、見た目の切り替えを優先します。
+function prepareGacha(count) {
+    lastCount = count;
 
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('gate-screen').classList.add('active');
-        
-        // アニメーション用クラスをリセット
-        gateBg.classList.remove('gate-prepare', 'gate-zoom-in');
+    // アニメーション用クラスを「まず外す」
+    gateBg.classList.remove('gate-prepare', 'gate-zoom-in');
+    
+    // --- 抽選シミュレーション（背景決定のため） ---
+    let topRarity = "r";
+    for (let i = 0; i < count; i++) {
+        const rand = Math.random();
+        let rarity = rand < 0.05 ? "ssr" : (rand < 0.25 ? "sr" : "r");
+        if (rarity === "ssr") topRarity = "ssr";
+        else if (rarity === "sr" && topRarity !== "ssr") topRarity = "sr";
     }
+
+    // 背景画像をセット（念のためコンソールで現在の設定を確認できるようにします）
+    const targetBg = BG_IMAGES[topRarity] || BG_IMAGES.default;
+    gateBg.style.backgroundImage = targetBg;
+    console.log("Setting background to:", targetBg); // ブラウザのF12キーで確認可能
+
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('gate-screen').classList.add('active');
+}
 
     // 待機画面をタップしてガチャ実行
     async function executeGacha() {
