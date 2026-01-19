@@ -265,21 +265,29 @@ for (let item of results) {
         newOverlay.innerHTML = ""; // 初期化
 
         if (item.rarity === "ssr") {
-            // 【SSR演出】ガチでセリフのみ
+            // 【SSR演出】白背景でセリフのみ
+            newOverlay.style.background = "white"; // 背景を白に！
+            
             const quoteDiv = document.createElement('div');
             quoteDiv.className = 'quote-text';
-            quoteDiv.style.fontSize = "36px"; // セリフをより強調
+            quoteDiv.style.fontSize = "36px";
+            // 白背景でも見えるように文字色を調整（金色の縁取りを強く）
+            quoteDiv.style.color = "#8b4513"; 
+            quoteDiv.style.textShadow = "0 0 10px gold, 0 0 20px gold";
             quoteDiv.innerText = `「${item.quote}」`;
             newOverlay.appendChild(quoteDiv);
 
             body.classList.add('super-shake');
-            await new Promise(r => setTimeout(r, 1500)); // じっくり見せる
+            await new Promise(r => setTimeout(r, 1500));
             body.classList.remove('super-shake');
 
-            // フラッシュと共にキャラ名とアイコンを表示
+            // --- ここでフラッシュして、いつもの黒背景（キャラ表示）に戻す ---
             flashOverlay.classList.add('do-flash');
+            newOverlay.style.background = "rgba(0, 0, 0, 0.95)"; // 背景を黒に戻す
+            
             setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
 
+            // あとはキャラ情報を表示
             const charInfo = document.createElement('div');
             charInfo.innerHTML = `
                 <div class="huge-icon" style="font-size:180px;">${item.icon}</div>
