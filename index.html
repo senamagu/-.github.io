@@ -265,15 +265,17 @@ for (let item of results) {
         newOverlay.innerHTML = ""; // 初期化
 
         if (item.rarity === "ssr") {
-            // 【SSR演出】白背景でセリフのみ
-            newOverlay.style.background = "white"; // 背景を白に！
+            // 【SSR演出開始】背景を白に
+            newOverlay.style.background = "white"; 
             
             const quoteDiv = document.createElement('div');
             quoteDiv.className = 'quote-text';
             quoteDiv.style.fontSize = "36px";
-            // 白背景でも見えるように文字色を調整（金色の縁取りを強く）
-            quoteDiv.style.color = "#8b4513"; 
-            quoteDiv.style.textShadow = "0 0 10px gold, 0 0 20px gold";
+            
+            // --- 白背景用の色設定（読みやすさ重視） ---
+            quoteDiv.style.color = "#555"; // 濃いグレー
+            quoteDiv.style.textShadow = "0 0 5px rgba(0,0,0,0.2)";
+            quoteDiv.style.transition = "all 0.3s ease"; // 色の変化を滑らかに
             quoteDiv.innerText = `「${item.quote}」`;
             newOverlay.appendChild(quoteDiv);
 
@@ -281,13 +283,18 @@ for (let item of results) {
             await new Promise(r => setTimeout(r, 1500));
             body.classList.remove('super-shake');
 
-            // --- ここでフラッシュして、いつもの黒背景（キャラ表示）に戻す ---
+            // --- フラッシュ！背景を黒に戻し、文字色を黄金に切り替える ---
             flashOverlay.classList.add('do-flash');
-            newOverlay.style.background = "rgba(0, 0, 0, 0.95)"; // 背景を黒に戻す
-            
+            newOverlay.style.background = "rgba(0, 0, 0, 0.95)"; 
+
+            // ここで文字色を元のSSRカラーに上書き
+            quoteDiv.style.color = "white";
+            quoteDiv.style.textShadow = "0 0 15px gold, 0 0 30px gold";
+            quoteDiv.style.fontSize = "32px"; // 少しサイズを調整して馴染ませる
+
             setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
 
-            // あとはキャラ情報を表示
+            // キャラ情報の表示
             const charInfo = document.createElement('div');
             charInfo.innerHTML = `
                 <div class="huge-icon" style="font-size:180px;">${item.icon}</div>
@@ -296,6 +303,7 @@ for (let item of results) {
                 <div class="tap-to-close">- TOUCH TO SCREEN -</div>
             `;
             newOverlay.appendChild(charInfo);
+        }
 
         } else {
             // 【SRまたはRのNEW演出】カードをめくる演出を入れる
