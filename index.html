@@ -272,10 +272,18 @@ for (let item of results) {
             quoteDiv.className = 'quote-text';
             quoteDiv.style.fontSize = "36px";
             
-            // --- 白背景用の色設定（読みやすさ重視） ---
-            quoteDiv.style.color = "#555"; // 濃いグレー
+            // --- セリフを画面中央に固定する設定を追加 ---
+            quoteDiv.style.position = "absolute";
+            quoteDiv.style.top = "50%";
+            quoteDiv.style.left = "50%";
+            quoteDiv.style.transform = "translate(-50%, -50%)";
+            quoteDiv.style.width = "100%"; // 横幅いっぱいにして中央揃えを維持
+            quoteDiv.style.margin = "0";
+            
+            // --- 白背景用の色設定 ---
+            quoteDiv.style.color = "#555"; 
             quoteDiv.style.textShadow = "0 0 5px rgba(0,0,0,0.2)";
-            quoteDiv.style.transition = "all 0.3s ease"; // 色の変化を滑らかに
+            quoteDiv.style.transition = "all 0.3s ease"; 
             quoteDiv.innerText = `「${item.quote}」`;
             newOverlay.appendChild(quoteDiv);
 
@@ -283,21 +291,23 @@ for (let item of results) {
             await new Promise(r => setTimeout(r, 1500));
             body.classList.remove('super-shake');
 
-            // --- フラッシュ！背景を黒に戻し、文字色を黄金に切り替える ---
+            // --- フラッシュ！背景を黒に戻すタイミング ---
             flashOverlay.classList.add('do-flash');
             newOverlay.style.background = "rgba(0, 0, 0, 0.95)"; 
 
-            // ここで文字色を元のSSRカラーに上書き
+            // セリフを中央から本来の位置（上部など）に戻したい場合はここを調整
+            // 今回は中央のまま黄金に光らせます
             quoteDiv.style.color = "white";
             quoteDiv.style.textShadow = "0 0 15px gold, 0 0 30px gold";
-            quoteDiv.style.fontSize = "32px"; // 少しサイズを調整して馴染ませる
+            quoteDiv.style.fontSize = "32px"; 
 
             setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
 
-            // キャラ情報の表示
+            // キャラ情報の表示（セリフと被らないよう、ここも必要に応じて調整）
             const charInfo = document.createElement('div');
+            // セリフが真ん中にあるので、キャラ情報は少し下にずらすか、セリフを消す処理を入れると綺麗です
             charInfo.innerHTML = `
-                <div class="huge-icon" style="font-size:180px;">${item.icon}</div>
+                <div class="huge-icon" style="font-size:180px; margin-top:100px;">${item.icon}</div>
                 <div class="huge-rarity" style="color:gold; font-size:50px;">${item.rarity.toUpperCase()}</div>
                 <div class="huge-name">${item.name}</div>
                 <div class="tap-to-close">- TOUCH TO SCREEN -</div>
