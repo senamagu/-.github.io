@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>ソシャゲ風ガチャ（演出修正版）</title>
+    <title>ソシャゲ風ガチャ（演出修正・パス安定版）</title>
     <style>
         body { background: #222; color: white; font-family: sans-serif; margin: 0; overflow: hidden; text-align: center; }
         .screen { display: none; width: 100vw; height: 100vh; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
@@ -39,10 +39,10 @@
 
         /* --- オーブ --- */
         .orb-container { position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; z-index: 3; }
-        .orb { position: absolute; width: 8px; height: 8px; border-radius: 50%; filter: blur(1px); opacity: 0; }
+        .orb { position: absolute; width: 10px; height: 10px; border-radius: 50%; filter: blur(2px); opacity: 0; }
 
         /* --- 結果画面・カード --- */
-        #result-container { display: grid; gap: 15px; margin-bottom: 30px; min-height: 320px; }
+        #result-container { display: grid; gap: 15px; margin-bottom: 30px; min-height: 320px; align-items: center; justify-content: center; }
         .card-wrapper { width: 100px; height: 140px; perspective: 600px; opacity: 0; transform: translateY(40px); position: relative; }
         .show-wrapper { animation: wrapperAppear 0.5s forwards; }
         @keyframes wrapperAppear { to { opacity: 1; transform: translateY(0); } }
@@ -50,25 +50,27 @@
         .card { width: 100%; height: 100%; position: relative; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
         .is-flipped { transform: rotateY(180deg); }
         .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .card-back { background: #444; border: 2px solid #666; background-image: repeating-linear-gradient(45deg, #333 0, #333 5px, #444 5px, #444 10px); }
-        .card-front { transform: rotateY(180deg); background: #333; border: 2px solid #555; }
-        
-        /* レア度別装飾 */
-        .back-sr { border-color: #f5576c; box-shadow: 0 0 10px #f5576c; }
-        .back-ssr { border-color: gold; box-shadow: 0 0 15px gold; }
-        .ssr { border: 3px solid gold; box-shadow: 0 0 20px gold; background: #444422; }
-        .sr { border: 2px solid #f5576c; box-shadow: 0 0 10px #f5576c; background: #442222; }
+        .card-back { background: #444; border: 2px solid #666; background-image: repeating-linear-gradient(45deg, #333 0, #333 10px, #444 10px, #444 20px); }
+        .card-front { transform: rotateY(180deg); background: #333; }
 
-        .new-badge { position: absolute; top: -8px; right: -8px; background: #00bcd4; color: white; border-radius: 4px; padding: 2px 6px; font-size: 12px; font-weight: bold; transform: rotate(10deg); z-index: 20; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        /* レア度別装飾 */
+        .back-sr { border-color: #f5576c; box-shadow: 0 0 15px #f5576c; }
+        .back-ssr { border-color: gold; box-shadow: 0 0 20px gold; }
+        .ssr { border: 3px solid gold; box-shadow: 0 0 25px gold; background: #444422; }
+        .sr { border: 2px solid #f5576c; box-shadow: 0 0 15px #f5576c; background: #442222; }
+
+        /* ダサくない位置に調整したNEWバッジ */
+        .new-badge { position: absolute; top: -10px; right: -10px; background: #00bcd4; color: white; border-radius: 4px; padding: 2px 8px; font-size: 12px; font-weight: bold; transform: rotate(15deg); z-index: 20; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
 
         /* --- 特殊演出オーバーレイ --- */
-        #new-character-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
+        #new-character-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
         .huge-card-wrapper { width: 200px; height: 280px; perspective: 1000px; margin-bottom: 20px; }
-        .huge-card-inner { width: 100%; height: 100%; position: relative; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d; }
         
         #flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; z-index: 2000; pointer-events: none; }
         .do-flash { animation: flashAnim 0.5s ease-out; }
         @keyframes flashAnim { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+        .quote-text { font-size: 28px; font-style: italic; color: white; text-shadow: 0 0 15px gold; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -107,7 +109,7 @@
     let lastCount = 1;
     let ownedChars = new Set();
     let resolveGachaWait = null;
-    let isFlippedInOverlay = false;
+    let isOverlayFlipped = false;
 
     const charData = {
         ssr: [
@@ -129,10 +131,9 @@
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById('gate-screen').classList.add('active');
         gateBg.classList.remove('gate-zoom-animation', 'sr-confirmed', 'ssr-confirmed');
-        const gateText = document.querySelector('.gate-text');
-        gateText.classList.remove('fade-out');
-        const orbContainer = document.querySelector('.orb-container');
-        if (orbContainer) orbContainer.remove();
+        document.querySelector('.gate-text').classList.remove('fade-out');
+        const oldOrbs = document.querySelector('.orb-container');
+        if (oldOrbs) oldOrbs.remove();
     }
 
     async function executeGacha() {
@@ -141,6 +142,7 @@
         const results = [];
         for(let i=0; i<lastCount; i++) {
             const rand = Math.random();
+            // SSR確率は相変わらずシビアに設定（0.05）
             let rarity = rand < 0.05 ? "ssr" : (rand < 0.25 ? "sr" : "r");
             const pool = charData[rarity];
             const char = pool[Math.floor(Math.random() * pool.length)];
@@ -196,7 +198,6 @@
         for (let item of results) {
             const wrapper = document.createElement('div');
             wrapper.className = "card-wrapper";
-            if (item.isNew) wrapper.innerHTML = '<div class="new-badge">NEW!</div>';
             
             const cardInner = document.createElement('div');
             cardInner.className = "card";
@@ -204,7 +205,11 @@
             back.className = `card-back ${item.rarity==='ssr'?'back-ssr':(item.rarity==='sr'?'back-sr':'')}`;
             const front = document.createElement('div');
             front.className = `card-front ${item.rarity}`;
-            front.innerHTML = `<div style="font-size:40px;">${item.icon}</div><div style="font-size:12px;margin-top:5px;">${item.rarity.toUpperCase()}</div>`;
+            front.innerHTML = `
+                <div style="font-size:40px;">${item.icon}</div>
+                <div style="font-size:12px;margin-top:5px;">${item.rarity.toUpperCase()}</div>
+                ${item.isNew ? '<div class="new-badge">NEW!</div>' : ''}
+            `;
             
             cardInner.appendChild(back); cardInner.appendChild(front);
             wrapper.appendChild(cardInner); resultContainer.appendChild(wrapper);
@@ -212,20 +217,22 @@
             await new Promise(r => setTimeout(r, 100));
             wrapper.classList.add('show-wrapper');
 
-            if (item.rarity === "ssr" || item.isNew) {
+            // NEWキャラかSSRなら、拡大＆めくり演出へ
+            if (item.isNew || item.rarity === "ssr") {
                 await openOverlay(item);
             }
+
             cardInner.classList.add('is-flipped');
-            await new Promise(r => setTimeout(r, 200));
+            await new Promise(r => setTimeout(r, 150));
         }
     }
 
-    async function openOverlay(item) {
-        isFlippedInOverlay = false;
-        newOverlay.style.display = 'flex';
+    function openOverlay(item) {
+        isOverlayFlipped = false;
         newOverlay.innerHTML = `
+            ${item.rarity === 'ssr' ? `<div class="quote-text">「${item.quote}」</div>` : ''}
             <div class="huge-card-wrapper">
-                <div class="huge-card-inner" id="overlay-card">
+                <div class="card" id="overlay-card-inner">
                     <div class="card-back ${item.rarity==='ssr'?'back-ssr':'back-sr'}" style="width:200px; height:280px;"></div>
                     <div class="card-front ${item.rarity}" style="width:200px; height:280px; transform: rotateY(180deg);">
                         <div style="font-size:100px;">${item.icon}</div>
@@ -235,24 +242,33 @@
             <div id="overlay-info" style="opacity:0; transition: 0.5s;">
                 <div style="font-size:32px; color:gold; font-weight:bold;">${item.rarity.toUpperCase()}</div>
                 <div style="font-size:24px;">${item.name}</div>
-                <div style="margin-top:20px; color:#aaa;">- TOUCH TO CONTINUE -</div>
+                <div style="margin-top:30px; color:#aaa; animation: blink 1s infinite;">- TOUCH TO CONTINUE -</div>
             </div>
         `;
+        newOverlay.style.display = 'flex';
         return new Promise(resolve => { resolveGachaWait = resolve; });
     }
 
     function handleOverlayClick() {
-        if (!isFlippedInOverlay) {
-            document.getElementById('overlay-card').classList.add('is-flipped');
-            document.getElementById('overlay-info').style.opacity = '1';
-            isFlippedInOverlay = true;
+        const inner = document.getElementById('overlay-card-inner');
+        const info = document.getElementById('overlay-info');
+        
+        if (!isOverlayFlipped) {
+            // 1回目のタップ：カードをめくる
+            inner.classList.add('is-flipped');
+            if (info) info.style.opacity = '1';
+            isOverlayFlipped = true;
         } else {
+            // 2回目のタップ：閉じて次へ
             newOverlay.style.display = 'none';
             if (resolveGachaWait) resolveGachaWait();
         }
     }
 
-    function toLobby() { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById('lobby-screen').classList.add('active'); }
+    function toLobby() { 
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
+        document.getElementById('lobby-screen').classList.add('active'); 
+    }
 </script>
 </body>
 </html>
