@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>ソシャゲ風ガチャ（NEW演出完成版）</title>
+    <title>ソシャゲ風ガチャ（昇格・カットイン完成版）</title>
     <style>
         body { background: #222; color: white; font-family: sans-serif; margin: 0; overflow: hidden; text-align: center; }
         .screen { display: none; width: 100vw; height: 100vh; flex-direction: column; align-items: center; justify-content: center; position: relative; }
@@ -16,13 +16,7 @@
         #result-screen { background: #111; }
         #result-container { display: grid; gap: 15px; margin-bottom: 30px; min-height: 320px; align-items: center; justify-items: center; }
 
-        /* カードデザイン */
-        .card { 
-            width: 100px; height: 140px; background: #333; border-radius: 8px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            opacity: 0; transform: translateY(40px) scale(0.8); cursor: pointer;
-            position: relative; 
-        }
+        .card { width: 100px; height: 140px; background: #333; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transform: translateY(40px) scale(0.8); cursor: pointer; position: relative; }
         .show-card { animation: cardAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes cardAppear { to { opacity: 1; transform: translateY(0) scale(1); } }
 
@@ -31,70 +25,35 @@
         .ssr { border: 3px solid gold; box-shadow: 0 0 25px gold; background: #444422; }
         .new-badge { position: absolute; top: -10px; right: -10px; background: #00bcd4; color: white; border-radius: 50%; padding: 5px 8px; font-size: 10px; font-weight: bold; transform: rotate(15deg); z-index: 10; }
 
-        /* --- NEWキャラクター全画面演出 --- */
-        #new-character-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.95); z-index: 1000;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            cursor: pointer;
-        }
+        #new-character-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .huge-icon { font-size: 150px; margin-bottom: 20px; filter: drop-shadow(0 0 20px gold); }
         .huge-rarity { font-size: 40px; color: gold; font-style: italic; font-weight: bold; }
         .huge-name { font-size: 30px; margin-top: 10px; border-bottom: 2px solid white; padding-bottom: 10px; }
         .tap-to-close { margin-top: 50px; font-size: 18px; animation: blink 1s infinite; color: #aaa; }
         @keyframes blink { 50% { opacity: 0; } }
 
-        /* 演出エフェクト */
         #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; display: none; align-items: center; justify-content: center; z-index: 100; font-size: 32px; font-weight: bold; }
         .rare-effect { color: gold; text-shadow: 0 0 20px gold; animation: shake 0.1s infinite; }
         .ssr-effect { background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff); background-size: 400% 400%; animation: rainbow 1s linear infinite, shake 0.1s infinite; color: white; }
         @keyframes shake { 0% { transform: translate(2px, 2px); } 100% { transform: translate(-2px, -2px); } }
-        @keyframes rainbow { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
-        #flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; z-index: 200; pointer-events: none; }
+        #flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; z-index: 2000; pointer-events: none; }
         .do-flash { animation: flashAnim 0.5s ease-out; }
         @keyframes flashAnim { 0% { opacity: 1; } 100% { opacity: 0; } }
 
-        /* SSRカットインのセリフ */
-        .quote-text {
-            font-size: 28px;
-            font-style: italic;
-            color: white;
-            text-shadow: 0 0 15px gold;
-            margin-bottom: 20px;
-            opacity: 0;
-            transform: scale(1.2);
-            animation: quoteIn 0.8s ease-out forwards;
-        }
-        @keyframes quoteIn {
-            to { opacity: 1; transform: scale(1); }
-        }
+        .quote-text { font-size: 28px; font-style: italic; color: white; text-shadow: 0 0 15px gold; margin-bottom: 20px; animation: quoteIn 0.8s ease-out forwards; }
+        @keyframes quoteIn { from { opacity: 0; transform: scale(1.2); } to { opacity: 1; transform: scale(1); } }
 
-        /* 画面を激しく揺らす（SSR確定時） */
-        .super-shake {
-            animation: superShake 0.4s infinite;
-        }
-        @keyframes superShake {
-            0% { transform: translate(2px, 2px) rotate(0deg); }
-            25% { transform: translate(-3px, 1px) rotate(1deg); }
-            50% { transform: translate(1px, -2px) rotate(-1deg); }
-            75% { transform: translate(-2px, 3px) rotate(0deg); }
-            100% { transform: translate(2px, 2px) rotate(0deg); }
-        }
+        .super-shake { animation: superShake 0.4s infinite; }
+        @keyframes superShake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-3px, -2px); } 100% { transform: translate(2px, 2px); } }
 
-        /* 詳細ポップアップ（結果画面でタップした時） */
         #single-card-display { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 150; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .single-card-inner { width: 240px; height: 340px; background: #333; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-        #single-card-display.active { display: flex; }
     </style>
 </head>
-<body>
+<body id="main-body">
 
 <div id="new-character-overlay" onclick="resumeGacha()">
-    <div class="huge-rarity" id="huge-rarity">SSR</div>
-    <div class="huge-icon" id="huge-icon">🐉</div>
-    <div class="huge-name" id="huge-name">炎の竜王</div>
-    <div class="tap-to-close">- TOUCH TO SCREEN -</div>
-</div>
+    </div>
 
 <div id="lobby-screen" class="screen active">
     <h1>伝説の召喚</h1>
@@ -124,37 +83,37 @@
 </div>
 
 <script>
-    const lobbyScreen = document.getElementById('lobby-screen');
-    const resultScreen = document.getElementById('result-screen');
     const resultContainer = document.getElementById('result-container');
     const overlay = document.getElementById('overlay');
     const flashOverlay = document.getElementById('flash-overlay');
     const newOverlay = document.getElementById('new-character-overlay');
-    const singleCardDisplay = document.getElementById('single-card-display');
+    const body = document.getElementById('main-body');
 
     let lastCount = 1;
     let ownedChars = new Set(); 
     let resolveGachaWait = null;
+    let canClickToNext = false; // クリック許可フラグ
 
     const charData = {
-    ssr: [
-        { id: "dragon", icon: "🐉", name: "炎の竜王", quote: "我が焔に焼け焦げるがいい！" },
-        { id: "queen", icon: "👸", name: "光の女王", quote: "希望の光よ、世界を照らして。" },
-        { id: "diamond", icon: "💎", name: "蒼穹の宝珠", quote: "この輝き、誰にも渡さない。" }
-    ],
-    sr: [
-        { id: "sword", icon: "⚔️", name: "勇者の剣", quote: "この一撃で決める！" },
-        { id: "shield", icon: "🛡️", name: "守護者の盾", quote: "ここは一歩も通さないぜ。" },
-        { id: "fire", icon: "🔥", name: "灼熱の精霊", quote: "もっと熱くしてやるよ！" }
-    ],
-    r: [
-        { id: "plant", icon: "🌿", name: "草原の番人", quote: "風が吹いているね。" },
-        { id: "wood", icon: "🪵", name: "森の木こり", quote: "良い材木が採れそうだ。" },
-        { id: "bone", icon: "🦴", name: "彷徨う魂", quote: "私は…どこにいるのだ…" }
-    ]
-};
+        ssr: [
+            { id: "dragon", icon: "🐉", name: "炎の竜王", quote: "我が焔に焼け焦げるがいい！" },
+            { id: "queen", icon: "👸", name: "光 of 女王", quote: "希望の光よ、世界を照らして。" },
+            { id: "diamond", icon: "💎", name: "蒼穹の宝珠", quote: "この輝き、誰にも渡さない。" }
+        ],
+        sr: [
+            { id: "sword", icon: "⚔️", name: "勇者の剣", quote: "この一撃で決める！" },
+            { id: "shield", icon: "🛡️", name: "守護者の盾", quote: "ここは一歩も通さないぜ。" },
+            { id: "fire", icon: "🔥", name: "灼熱の精霊", quote: "もっと熱くしてやるよ！" }
+        ],
+        r: [
+            { id: "plant", icon: "🌿", name: "草原の番人", quote: "風が吹いているね。" },
+            { id: "wood", icon: "🪵", name: "森の木こり", quote: "良い材木が採れそうだ。" },
+            { id: "bone", icon: "🦴", name: "彷徨う魂", quote: "私は…どこにいるのだ…" }
+        ]
+    };
 
     function resumeGacha() {
+        if (!canClickToNext) return; // 許可されてない時は何もしない
         newOverlay.style.display = 'none';
         if (resolveGachaWait) resolveGachaWait();
     }
@@ -164,7 +123,7 @@
         const results = [];
         let topRarity = "r";
 
-        // 1. 計算
+        // 1. 抽選
         for (let i = 0; i < count; i++) {
             const rand = Math.random();
             let rarity = rand < 0.05 ? "ssr" : (rand < 0.25 ? "sr" : "r");
@@ -178,10 +137,11 @@
             results.push({ ...char, rarity, isNew });
         }
 
-        // 2. 演出
+        // 2. 導入演出
         overlay.style.display = "flex";
         overlay.className = "";
         overlay.innerText = "召喚中...";
+        overlay.style.color = "white";
         await new Promise(r => setTimeout(r, 600));
 
         if (topRarity === "ssr") {
@@ -196,73 +156,59 @@
             await new Promise(r => setTimeout(r, 1000));
         }
 
-        // 3. 画面転換
         overlay.style.display = "none";
-        lobbyScreen.classList.remove('active');
-        resultScreen.classList.add('active');
+        document.getElementById('lobby-screen').classList.remove('active');
+        document.getElementById('result-screen').classList.add('active');
         resultContainer.innerHTML = "";
         resultContainer.style.gridTemplateColumns = count === 1 ? "1fr" : "repeat(5, 1fr)";
 
-        // --- 4. 1枚ずつ表示ループ ---
+        // 3. カード表示ループ
         for (let item of results) {
-    
-            // 【ランダム昇格演出】（10%の確率でレア度が1段階アップ）
+            
+            // 【ランダム昇格演出】
             if (Math.random() < 0.1 && item.rarity !== "ssr") {
                 overlay.style.display = "flex";
+                overlay.className = "";
                 overlay.innerText = "！？";
                 overlay.style.color = "gold";
-                await new Promise(r => setTimeout(r, 600)); // 期待感を煽る
-        
-                if (item.rarity === "r") item.rarity = "sr";
-                else if (item.rarity === "sr") item.rarity = "ssr";
-        
+                await new Promise(r => setTimeout(r, 600));
+                
+                item.rarity = (item.rarity === "r") ? "sr" : "ssr";
                 overlay.innerText = "昇格！！";
                 await new Promise(r => setTimeout(r, 800));
                 overlay.style.display = "none";
-        }
+            }
 
-        // 【SSR専用豪華カットイン】
-        if (item.rarity === "ssr") {
-            newOverlay.style.display = 'flex';
-            // 一旦中身を空にしてセリフだけ出す
-            newOverlay.innerHTML = `<div class="quote-text">「${item.quote}」</div>`;
-            document.body.classList.add('super-shake'); // 画面を揺らす
-        
-            await new Promise(r => setTimeout(r, 1500)); // セリフを読ませる
-        
-            document.body.classList.remove('super-shake');
-            flashOverlay.classList.add('do-flash'); // バーン！
-        
-            // 通常のNEW演出用の中身をセット
-            newOverlay.innerHTML = `
-                <div class="huge-rarity">SSR</div>
-                <div class="huge-icon">${item.icon}</div>
-                <div class="huge-name">${item.name}</div>
-                <div class="quote-text" style="font-size:18px">「${item.quote}」</div>
-                <div class="tap-to-close">- TOUCH TO SCREEN -</div>
-            `;
-            setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
+            // 【SSR確定演出 & NEW演出】
+            if (item.rarity === "ssr" || item.isNew) {
+                canClickToNext = false; // 演出中はクリック禁止
+                newOverlay.style.display = 'flex';
+                
+                if (item.rarity === "ssr") {
+                    // SSRはセリフ先行
+                    newOverlay.innerHTML = `<div class="quote-text">「${item.quote}」</div>`;
+                    body.classList.add('super-shake');
+                    await new Promise(r => setTimeout(r, 1500));
+                    body.classList.remove('super-shake');
+                    flashOverlay.classList.add('do-flash');
+                    setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
+                }
 
-            // クリック待機（既出でもSSRなら必ず止める）
-            await new Promise(resolve => { resolveGachaWait = resolve; });
-        
-        } else if (item.isNew) {
-            // 通常のNEW演出（SR/Rの新規）
-            document.getElementById('huge-icon').innerText = item.icon;
-            document.getElementById('huge-rarity').innerText = item.rarity.toUpperCase();
-            document.getElementById('huge-name').innerText = item.name;
-            // セリフ表示を追加する場合
-            const quoteDiv = document.createElement('div');
-            quoteDiv.className = "quote-text";
-            quoteDiv.style.fontSize = "18px";
-            quoteDiv.innerText = `「${item.quote}」`;
-            newOverlay.appendChild(quoteDiv);
-        
-            newOverlay.style.display = 'flex';
-            await new Promise(resolve => { resolveGachaWait = resolve; });
-        }
+                // 詳細情報の表示
+                newOverlay.innerHTML = `
+                    <div class="huge-rarity" style="color:${item.rarity==='ssr'?'gold':'#f5576c'}">${item.rarity.toUpperCase()}</div>
+                    <div class="huge-icon">${item.icon}</div>
+                    <div class="huge-name">${item.name}</div>
+                    <div class="quote-text" style="font-size:18px; margin-top:10px;">「${item.quote}」</div>
+                    <div class="tap-to-close">- TOUCH TO SCREEN -</div>
+                `;
+                
+                await new Promise(r => setTimeout(r, 500)); // 少しだけ待ってから
+                canClickToNext = true; // クリック解禁
+                await new Promise(resolve => { resolveGachaWait = resolve; });
+            }
 
-            // カード生成
+            // 一覧にカードを追加
             const card = document.createElement('div');
             card.className = `card ${item.rarity}`;
             card.innerHTML = `
@@ -272,10 +218,9 @@
             `;
             card.onclick = () => showDetail(item);
             resultContainer.appendChild(card);
-
-            await new Promise(r => setTimeout(r, 30));
+            await new Promise(r => setTimeout(r, 50));
             card.classList.add('show-card');
-            await new Promise(r => setTimeout(r, 800 / count));
+            await new Promise(r => setTimeout(r, 500 / count));
         }
     }
 
@@ -284,16 +229,16 @@
         document.getElementById('card-detail-rarity').innerText = item.rarity.toUpperCase();
         document.getElementById('card-detail-name').innerText = item.name;
         document.getElementById('detail-inner').className = `single-card-inner ${item.rarity}`;
-        singleCardDisplay.classList.add('active');
+        document.getElementById('single-card-display').classList.add('active');
     }
 
     function closeSingleCardDisplay() {
-        singleCardDisplay.classList.remove('active');
+        document.getElementById('single-card-display').classList.remove('active');
     }
 
     function toLobby() {
-        resultScreen.classList.remove('active');
-        lobbyScreen.classList.add('active');
+        document.getElementById('result-screen').classList.remove('active');
+        document.getElementById('lobby-screen').classList.add('active');
     }
 </script>
 
