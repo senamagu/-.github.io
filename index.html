@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>ソシャゲ風ガチャ（召喚儀式版）</title>
+    <title>ソシャゲ風ガチャ（修正版）</title>
     <style>
         body { background: #222; color: white; font-family: sans-serif; margin: 0; overflow: hidden; text-align: center; }
         .screen { display: none; width: 100vw; height: 100vh; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
@@ -261,4 +261,106 @@
             front.innerHTML = `
                 <div style="font-size: 40px;">${item.icon}</div>
                 <div style="font-size: 14px; margin-top: 10px;">${item.rarity.toUpperCase()}</div>
-                ${item.isNew ? '<div class="new-badge">NEW!
+                ${item.isNew ? '<div class="new-badge">NEW!</div>' : ''}
+            `;
+
+            cardInner.appendChild(back);
+            cardInner.appendChild(front);
+            wrapper.appendChild(cardInner);
+            resultContainer.appendChild(wrapper);
+
+            await new Promise(r => setTimeout(r, 50));
+            wrapper.classList.add('show-wrapper');
+            await new Promise(r => setTimeout(r, 300 / count));
+
+            // 特殊演出
+            if (item.rarity === "ssr" || item.isNew) {
+                canClickToNext = false;
+                newOverlay.style.display = 'flex';
+                newOverlay.style.pointerEvents = 'auto';
+                newOverlay.innerHTML = "";
+
+                if (item.rarity === "ssr") {
+                    newOverlay.style.background = "white"; 
+                    const quoteDiv = document.createElement('div');
+                    quoteDiv.className = 'quote-text';
+                    quoteDiv.style.fontSize = "36px";
+                    quoteDiv.style.color = "#555"; 
+                    quoteDiv.style.textShadow = "0 0 5px rgba(0,0,0,0.2)";
+                    quoteDiv.style.transition = "all 0.3s ease";
+                    quoteDiv.innerText = `「${item.quote}」`;
+                    newOverlay.appendChild(quoteDiv);
+
+                    body.classList.add('super-shake');
+                    await new Promise(r => setTimeout(r, 1500));
+                    body.classList.remove('super-shake');
+
+                    flashOverlay.classList.add('do-flash');
+                    newOverlay.style.background = "rgba(0, 0, 0, 0.95)"; 
+                    quoteDiv.style.color = "white";
+                    quoteDiv.style.textShadow = "0 0 15px gold, 0 0 30px gold";
+                    quoteDiv.style.fontSize = "32px";
+                    setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
+
+                    const charInfo = document.createElement('div');
+                    charInfo.innerHTML = `
+                        <div class="huge-icon" style="font-size:180px;">${item.icon}</div>
+                        <div class="huge-rarity" style="color:gold; font-size:50px;">${item.rarity.toUpperCase()}</div>
+                        <div class="huge-name">${item.name}</div>
+                        <div class="tap-to-close">- TOUCH TO SCREEN -</div>
+                    `;
+                    newOverlay.appendChild(charInfo);
+                } else {
+                    newOverlay.innerHTML = `
+                        <div class="huge-card-wrapper">
+                            <div class="card" id="huge-card-inner">
+                                <div class="card-back back-sr" style="width:200px; height:280px;"></div>
+                                <div class="card-front ${item.rarity}" style="width:200px; height:280px; transform: rotateY(180deg);">
+                                    <div style="font-size: 100px;">${item.icon}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="huge-rarity" style="color:#f5576c">${item.rarity.toUpperCase()}</div>
+                        <div class="huge-name">${item.name}</div>
+                        <div class="tap-to-close">- TOUCH TO SCREEN -</div>
+                    `;
+                    await new Promise(r => setTimeout(r, 300));
+                    document.getElementById('huge-card-inner').classList.add('is-flipped');
+                }
+
+                canClickToNext = true;
+                await new Promise(resolve => { resolveGachaWait = resolve; });
+                cardInner.classList.add('is-flipped');
+            } else {
+                await new Promise(r => setTimeout(r, 100));
+                cardInner.classList.add('is-flipped');
+            }
+
+            cardInner.onclick = (e) => {
+                e.stopPropagation();
+                showDetail(item);
+            };
+        }
+    }
+
+    function showDetail(item) {
+        document.getElementById('card-detail-icon').innerText = item.icon;
+        document.getElementById('card-detail-rarity').innerText = item.rarity.toUpperCase();
+        document.getElementById('card-detail-name').innerText = item.name;
+        document.getElementById('detail-inner').className = `single-card-inner ${item.rarity}`;
+        document.getElementById('single-card-display').style.display = 'flex';
+    }
+
+    function closeSingleCardDisplay() {
+        document.getElementById('single-card-display').style.display = 'none';
+    }
+
+    function toLobby() {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('lobby-screen').classList.add('active');
+        flashOverlay.classList.remove('do-flash');
+    }
+</script>
+
+</body>
+</html>
