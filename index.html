@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>ソシャゲ風ガチャ（完成版）</title>
+    <title>ソシャゲ風ガチャ（演出修正版）</title>
     <style>
         body { background: #222; color: white; font-family: sans-serif; margin: 0; overflow: hidden; text-align: center; }
         .screen { display: none; width: 100vw; height: 100vh; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
@@ -14,24 +14,20 @@
 
         #lobby-screen { background: radial-gradient(circle, #0042A9, #000); }
 
-        /* --- 召喚待機画面 (Gate) --- */
+        /* --- 召喚待機画面 --- */
         #gate-screen { background: black; cursor: pointer; }
-
         .gate-bg {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('./background/R.jpeg'); /* 相対パスに修正 */
+            background-image: url('./background/R.jpeg');
             background-size: cover; background-position: center;
             z-index: 1; transform: scale(1);
-            transition: background-image 0.3s ease;
         }
-
         .gate-bg.sr-confirmed { background-image: url('./background/SR.jpeg'); }
         .gate-bg.ssr-confirmed { background-image: url('./background/SSR.jpeg'); box-shadow: inset 0 0 100px gold; }
 
-        /* アニメーション：タメてから突っ込む */
         .gate-zoom-animation { animation: gateAction 2.2s cubic-bezier(0.45, 0, 0.55, 1) forwards; }
         @keyframes gateAction {
-            0% { transform: scale(1); filter: brightness(1); }
+            0% { transform: scale(1); }
             30% { transform: scale(0.9); filter: brightness(0.8); }
             100% { transform: scale(15); filter: brightness(5) blur(10px); opacity: 0; }
         }
@@ -41,43 +37,43 @@
         .fade-out { animation: textFade 0.5s forwards; }
         @keyframes textFade { to { opacity: 0; transform: scale(0.8); } }
 
-        /* --- オーブ演出 --- */
+        /* --- オーブ --- */
         .orb-container { position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; z-index: 3; }
-        .orb { position: absolute; width: 10px; height: 10px; border-radius: 50%; filter: blur(2px); opacity: 0; }
+        .orb { position: absolute; width: 8px; height: 8px; border-radius: 50%; filter: blur(1px); opacity: 0; }
 
-        /* --- 結果画面・カード関連 --- */
-        #result-screen { background: #111; }
-        #result-container { display: grid; gap: 15px; margin-bottom: 30px; min-height: 320px; align-items: center; justify-items: center; }
-        .card-wrapper { width: 100px; height: 140px; perspective: 600px; opacity: 0; transform: translateY(40px); }
+        /* --- 結果画面・カード --- */
+        #result-container { display: grid; gap: 15px; margin-bottom: 30px; min-height: 320px; }
+        .card-wrapper { width: 100px; height: 140px; perspective: 600px; opacity: 0; transform: translateY(40px); position: relative; }
         .show-wrapper { animation: wrapperAppear 0.5s forwards; }
         @keyframes wrapperAppear { to { opacity: 1; transform: translateY(0); } }
-        .card { width: 100%; height: 100%; position: relative; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; cursor: pointer; }
+        
+        .card { width: 100%; height: 100%; position: relative; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
         .is-flipped { transform: rotateY(180deg); }
         .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .card-back { background: #444; border: 2px solid #666; background-image: repeating-linear-gradient(45deg, #333 0, #333 10px, #444 10px, #444 20px); }
-        .card-front { transform: rotateY(180deg); background: #333; }
-        .back-sr { border: 2px solid #f5576c; box-shadow: 0 0 15px #f5576c; }
-        .back-ssr { border: 2px solid gold; box-shadow: 0 0 20px gold; animation: goldPulse 1s infinite alternate; }
-        @keyframes goldPulse { from { box-shadow: 0 0 10px gold; } to { box-shadow: 0 0 25px gold; } }
-        .ssr { border: 3px solid gold; box-shadow: 0 0 25px gold; background: #444422; }
-        .sr { border: 2px solid #f5576c; box-shadow: 0 0 15px #f5576c; background: #442222; }
+        .card-back { background: #444; border: 2px solid #666; background-image: repeating-linear-gradient(45deg, #333 0, #333 5px, #444 5px, #444 10px); }
+        .card-front { transform: rotateY(180deg); background: #333; border: 2px solid #555; }
+        
+        /* レア度別装飾 */
+        .back-sr { border-color: #f5576c; box-shadow: 0 0 10px #f5576c; }
+        .back-ssr { border-color: gold; box-shadow: 0 0 15px gold; }
+        .ssr { border: 3px solid gold; box-shadow: 0 0 20px gold; background: #444422; }
+        .sr { border: 2px solid #f5576c; box-shadow: 0 0 10px #f5576c; background: #442222; }
 
-        /* 特殊演出・フラッシュ */
+        .new-badge { position: absolute; top: -8px; right: -8px; background: #00bcd4; color: white; border-radius: 4px; padding: 2px 6px; font-size: 12px; font-weight: bold; transform: rotate(10deg); z-index: 20; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+
+        /* --- 特殊演出オーバーレイ --- */
+        #new-character-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
+        .huge-card-wrapper { width: 200px; height: 280px; perspective: 1000px; margin-bottom: 20px; }
+        .huge-card-inner { width: 100%; height: 100%; position: relative; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d; }
+        
         #flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; z-index: 2000; pointer-events: none; }
         .do-flash { animation: flashAnim 0.5s ease-out; }
         @keyframes flashAnim { 0% { opacity: 1; } 100% { opacity: 0; } }
-
-        #new-character-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        .huge-icon { font-size: 150px; filter: drop-shadow(0 0 20px gold); }
-        .super-shake { animation: superShake 0.4s infinite; }
-        @keyframes superShake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-3px, -2px); } 100% { transform: translate(2px, 2px); } }
-        
-        #single-card-display { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
     </style>
 </head>
-<body id="main-body">
+<body>
 
-<div id="new-character-overlay" onclick="resumeGacha()"></div>
+<div id="new-character-overlay" onclick="handleOverlayClick()"></div>
 
 <div id="lobby-screen" class="screen active">
     <h1>伝説の召喚</h1>
@@ -93,6 +89,7 @@
 </div>
 
 <div id="flash-overlay"></div>
+
 <div id="result-screen" class="screen">
     <div id="result-container"></div>
     <div class="btn-group">
@@ -101,41 +98,29 @@
     </div>
 </div>
 
-<div id="single-card-display" onclick="closeSingleCardDisplay()">
-    <div class="single-card-inner r" id="detail-inner">
-        <div id="card-detail-icon" style="font-size: 80px;"></div>
-        <div id="card-detail-rarity" style="font-size: 24px; font-weight: bold; margin-top: 10px;"></div>
-        <div id="card-detail-name" style="font-size: 18px; color: #ccc;"></div>
-    </div>
-</div>
-
 <script>
     const resultContainer = document.getElementById('result-container');
     const flashOverlay = document.getElementById('flash-overlay');
     const newOverlay = document.getElementById('new-character-overlay');
     const gateBg = document.getElementById('gate-bg');
-    const body = document.getElementById('main-body');
 
     let lastCount = 1;
-    let ownedChars = new Set(); 
+    let ownedChars = new Set();
     let resolveGachaWait = null;
-    let canClickToNext = false; 
+    let isFlippedInOverlay = false;
 
     const charData = {
         ssr: [
             { id: "dragon", icon: "🐉", name: "炎の竜王", quote: "我が焔に焼け焦げるがいい！" },
-            { id: "queen", icon: "👸", name: "光の女王", quote: "希望の光よ、世界を照らして。" },
-            { id: "diamond", icon: "💎", name: "蒼穹の宝珠", quote: "この輝き、誰にも渡さない。" }
+            { id: "queen", icon: "👸", name: "光の女王", quote: "希望の光よ、世界を照らして。" }
         ],
         sr: [
             { id: "sword", icon: "⚔️", name: "勇者の剣", quote: "この一撃で決める！" },
-            { id: "shield", icon: "🛡️", name: "守護者の盾", quote: "ここは一歩も通さないぜ。" },
             { id: "fire", icon: "🔥", name: "灼熱の精霊", quote: "もっと熱くしてやるよ！" }
         ],
         r: [
             { id: "plant", icon: "🌿", name: "草原の番人", quote: "風が吹いているね。" },
-            { id: "wood", icon: "🪵", name: "森の木こり", quote: "良い材木が採れそうだ。" },
-            { id: "bone", icon: "🦴", name: "彷徨う魂", quote: "私は…どこにいるのだ…" }
+            { id: "wood", icon: "🪵", name: "森の木こり", quote: "良い材木だ。" }
         ]
     };
 
@@ -146,71 +131,63 @@
         gateBg.classList.remove('gate-zoom-animation', 'sr-confirmed', 'ssr-confirmed');
         const gateText = document.querySelector('.gate-text');
         gateText.classList.remove('fade-out');
-        const container = document.querySelector('.orb-container');
-        if(container) container.remove();
+        const orbContainer = document.querySelector('.orb-container');
+        if (orbContainer) orbContainer.remove();
     }
 
-    function generateResults(count) {
+    async function executeGacha() {
+        if (gateBg.classList.contains('gate-zoom-animation')) return;
+        
         const results = [];
-        for (let i = 0; i < count; i++) {
+        for(let i=0; i<lastCount; i++) {
             const rand = Math.random();
             let rarity = rand < 0.05 ? "ssr" : (rand < 0.25 ? "sr" : "r");
             const pool = charData[rarity];
             const char = pool[Math.floor(Math.random() * pool.length)];
             const isNew = !ownedChars.has(char.id);
             if (isNew) ownedChars.add(char.id);
-            results.push({ ...char, rarity, isNew });
+            results.push({...char, rarity, isNew});
         }
-        return results;
-    }
 
-    async function executeGacha() {
-        if (gateBg.classList.contains('gate-zoom-animation')) return;
-
-        const results = generateResults(lastCount);
-        const hasSSR = results.some(item => item.rarity === "ssr");
-        const hasSR = results.some(item => item.rarity === "sr");
+        const hasSSR = results.some(r => r.rarity === "ssr");
+        const hasSR = results.some(r => r.rarity === "sr");
 
         if (hasSSR) { gateBg.classList.add('ssr-confirmed'); createOrbs(true); }
         else if (hasSR) { gateBg.classList.add('sr-confirmed'); createOrbs(false); }
 
         document.querySelector('.gate-text').classList.add('fade-out');
         gateBg.classList.add('gate-zoom-animation');
-        
+
         await new Promise(r => setTimeout(r, 1200));
         flashOverlay.classList.add('do-flash');
         setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
-        
         await new Promise(r => setTimeout(r, 800));
-        renderCards(results);
+
+        showResults(results);
     }
 
     function createOrbs(isSSR) {
         const container = document.createElement('div');
         container.className = 'orb-container';
         document.getElementById('gate-screen').appendChild(container);
-        const count = isSSR ? 40 : 15;
         const color = isSSR ? 'gold' : '#00bcd4';
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i < (isSSR ? 40 : 15); i++) {
             const orb = document.createElement('div');
             orb.className = 'orb';
             orb.style.background = color;
-            orb.style.boxShadow = `0 0 10px ${color}`;
-            const angle = Math.random() * Math.PI * 2;
-            const distance = 400 + Math.random() * 400;
-            const tx = Math.cos(angle) * distance;
-            const ty = Math.sin(angle) * distance;
             orb.style.left = '50%'; orb.style.top = '50%';
             container.appendChild(orb);
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 300 + Math.random() * 300;
             orb.animate([
-                { transform: `translate(-50%, -50%) scale(0)`, opacity: 0 },
+                { transform: 'translate(-50%, -50%) scale(0)', opacity: 0 },
                 { opacity: 1, offset: 0.2 },
-                { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(3)`, opacity: 0 }
+                { transform: `translate(calc(-50% + ${Math.cos(angle)*dist}px), calc(-50% + ${Math.sin(angle)*dist}px)) scale(3)`, opacity: 0 }
             ], { duration: 1500, delay: Math.random() * 1000, fill: 'forwards' });
         }
     }
 
-    async function renderCards(results) {
+    async function showResults(results) {
         document.getElementById('gate-screen').classList.remove('active');
         document.getElementById('result-screen').classList.add('active');
         resultContainer.innerHTML = "";
@@ -219,49 +196,63 @@
         for (let item of results) {
             const wrapper = document.createElement('div');
             wrapper.className = "card-wrapper";
+            if (item.isNew) wrapper.innerHTML = '<div class="new-badge">NEW!</div>';
+            
             const cardInner = document.createElement('div');
             cardInner.className = "card";
             const back = document.createElement('div');
-            back.className = `card-back ${item.rarity === 'ssr' ? 'back-ssr' : (item.rarity === 'sr' ? 'back-sr' : '')}`;
+            back.className = `card-back ${item.rarity==='ssr'?'back-ssr':(item.rarity==='sr'?'back-sr':'')}`;
             const front = document.createElement('div');
             front.className = `card-front ${item.rarity}`;
-            front.innerHTML = `<div style="font-size: 40px;">${item.icon}</div><div style="font-size: 14px; margin-top: 10px;">${item.rarity.toUpperCase()}</div>${item.isNew ? '<div class="new-badge">NEW!</div>' : ''}`;
+            front.innerHTML = `<div style="font-size:40px;">${item.icon}</div><div style="font-size:12px;margin-top:5px;">${item.rarity.toUpperCase()}</div>`;
+            
             cardInner.appendChild(back); cardInner.appendChild(front);
             wrapper.appendChild(cardInner); resultContainer.appendChild(wrapper);
 
-            await new Promise(r => setTimeout(r, 50));
-            wrapper.classList.add('show-wrapper');
             await new Promise(r => setTimeout(r, 100));
+            wrapper.classList.add('show-wrapper');
 
             if (item.rarity === "ssr" || item.isNew) {
-                canClickToNext = false;
-                newOverlay.style.display = 'flex';
-                newOverlay.style.pointerEvents = 'auto';
-                newOverlay.innerHTML = "";
-                if (item.rarity === "ssr") {
-                    newOverlay.style.background = "white";
-                    const q = document.createElement('div'); q.className='quote-text'; q.style.color="#555"; q.innerText=`「${item.quote}」`;
-                    newOverlay.appendChild(q);
-                    body.classList.add('super-shake');
-                    await new Promise(r => setTimeout(r, 1200));
-                    body.classList.remove('super-shake');
-                    flashOverlay.classList.add('do-flash');
-                    newOverlay.style.background = "rgba(0,0,0,0.95)";
-                    q.style.color="white"; q.style.textShadow="0 0 15px gold";
-                    newOverlay.innerHTML += `<div class="huge-icon">${item.icon}</div><div style="color:gold; font-size:40px;">SSR</div><div>${item.name}</div><div style="margin-top:20px;">- TOUCH TO CONTINUE -</div>`;
-                } else {
-                    newOverlay.innerHTML = `<div class="huge-icon">${item.icon}</div><div style="font-size:30px;">${item.rarity.toUpperCase()}</div><div>${item.name}</div><div style="margin-top:20px;">- TOUCH TO CONTINUE -</div>`;
-                }
-                canClickToNext = true;
-                await new Promise(resolve => { resolveGachaWait = resolve; });
+                await openOverlay(item);
             }
             cardInner.classList.add('is-flipped');
+            await new Promise(r => setTimeout(r, 200));
         }
     }
 
-    function resumeGacha() { if (canClickToNext) { newOverlay.style.display = 'none'; newOverlay.style.pointerEvents = 'none'; if (resolveGachaWait) resolveGachaWait(); } }
+    async function openOverlay(item) {
+        isFlippedInOverlay = false;
+        newOverlay.style.display = 'flex';
+        newOverlay.innerHTML = `
+            <div class="huge-card-wrapper">
+                <div class="huge-card-inner" id="overlay-card">
+                    <div class="card-back ${item.rarity==='ssr'?'back-ssr':'back-sr'}" style="width:200px; height:280px;"></div>
+                    <div class="card-front ${item.rarity}" style="width:200px; height:280px; transform: rotateY(180deg);">
+                        <div style="font-size:100px;">${item.icon}</div>
+                    </div>
+                </div>
+            </div>
+            <div id="overlay-info" style="opacity:0; transition: 0.5s;">
+                <div style="font-size:32px; color:gold; font-weight:bold;">${item.rarity.toUpperCase()}</div>
+                <div style="font-size:24px;">${item.name}</div>
+                <div style="margin-top:20px; color:#aaa;">- TOUCH TO CONTINUE -</div>
+            </div>
+        `;
+        return new Promise(resolve => { resolveGachaWait = resolve; });
+    }
+
+    function handleOverlayClick() {
+        if (!isFlippedInOverlay) {
+            document.getElementById('overlay-card').classList.add('is-flipped');
+            document.getElementById('overlay-info').style.opacity = '1';
+            isFlippedInOverlay = true;
+        } else {
+            newOverlay.style.display = 'none';
+            if (resolveGachaWait) resolveGachaWait();
+        }
+    }
+
     function toLobby() { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById('lobby-screen').classList.add('active'); }
-    function closeSingleCardDisplay() { document.getElementById('single-card-display').style.display = 'none'; }
 </script>
 </body>
 </html>
