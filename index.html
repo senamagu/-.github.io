@@ -137,15 +137,18 @@
 
         // 4. カードを順番に表示
         for (const rarity of results) {
-            const card = document.createElement('div');
-            card.className = `card ${rarity}`;
-            card.innerText = rarity.toUpperCase();
-            resultContainer.appendChild(card);
-            
-            // アニメーションを少し遅らせて適用
-            setTimeout(() => card.classList.add('show-card'), 50);
-            
-            await new Promise(r => setTimeout(r, 1500 / count));
+             const card = document.createElement('div');
+             card.className = `card ${rarity}`;
+             card.innerText = rarity.toUpperCase();
+             resultContainer.appendChild(card);
+    
+        // ブラウザに描画を促すため、少しだけ待ってからクラスを付与
+        await new Promise(r => setTimeout(r, 10)); 
+        card.classList.add('show-card');
+    
+        // 次のカードが出るまでの待機時間
+        await new Promise(r => setTimeout(r, 1500 / count));
+    }
         }
     }
 
