@@ -211,7 +211,7 @@
                     // SSRはセリフ先行
                     newOverlay.innerHTML = `<div class="quote-text">「${item.quote}」</div>`;
                     body.classList.add('super-shake');
-                    await new Promise(r => setTimeout(r, 500));
+                    await new Promise(r => setTimeout(r, 1500));
                     body.classList.remove('super-shake');
                     flashOverlay.classList.add('do-flash');
                     setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
@@ -234,11 +234,19 @@
             // 一覧にカードを追加
             const card = document.createElement('div');
             card.className = `card ${item.rarity}`;
+            card.style.pointerEvents = 'auto'; // カードがクリック可能であることを保証
             card.innerHTML = `
                 <div style="font-size: 40px;">${item.icon}</div>
                 <div style="font-size: 14px; margin-top: 10px;">${item.rarity.toUpperCase()}</div>
                 ${item.isNew ? '<div class="new-badge">NEW!</div>' : ''}
             `;
+
+            // ここが重要：確実に詳細表示を呼ぶ
+            card.onclick = (e) => {
+                e.stopPropagation(); // 他のイベントと干渉しないように
+                showDetail(item);
+            };
+            
             card.onclick = () => showDetail(item);
             resultContainer.appendChild(card);
             await new Promise(r => setTimeout(r, 50));
