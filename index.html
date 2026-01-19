@@ -17,7 +17,33 @@
         /* --- 結果画面 --- */
         #result-screen { background: #111; }
         #result-container { display: grid; gap: 15px; margin-bottom: 30px; min-height: 300px; align-items: center; }
-        .card { width: 100px; height: 140px; background: #444; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-weight: bold; opacity: 0; }
+        /* カードの基本状態 */
+    .card {
+        width: 100px;
+        height: 140px;
+        background: #444;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    
+        /* 最初は透明で、少し下に配置しておく */
+        opacity: 0;
+        transform: translateY(30px) scale(0.8);
+    }
+
+        /* このクラスがついた瞬間にアニメーション開始 */
+    .show-card {
+        animation: cardAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes cardAppear {
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
         
         /* レアリティ演出 */
         .r { background: #777; }
