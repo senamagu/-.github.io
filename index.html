@@ -199,6 +199,7 @@
         resultContainer.innerHTML = "";
         resultContainer.style.gridTemplateColumns = count === 1 ? "1fr" : "repeat(5, 1fr)";
 
+        // 3. カード表示ループ
         for (let item of results) {
             
             // 【昇格演出：SRからSSR】
@@ -215,20 +216,18 @@
                 overlay.style.display = "none";
             }
 
-            // --- カード枠の生成 ---
+            // --- カード枠の生成（最初は全員裏面） ---
             const wrapper = document.createElement('div');
             wrapper.className = "card-wrapper";
             
             const cardInner = document.createElement('div');
             cardInner.className = "card";
             
-            // 裏面の設定
             const back = document.createElement('div');
             back.className = "card-back";
             if (item.rarity === "ssr") back.classList.add('back-ssr');
             else if (item.rarity === "sr") back.classList.add('back-sr');
 
-            // 表面の設定
             const front = document.createElement('div');
             front.className = `card-front ${item.rarity}`;
             front.innerHTML = `
@@ -242,18 +241,14 @@
             wrapper.appendChild(cardInner);
             resultContainer.appendChild(wrapper);
 
-            // 表示アニメーション
+            // 一覧に並ぶアニメーション
             await new Promise(r => setTimeout(r, 50));
             wrapper.classList.add('show-wrapper');
             await new Promise(r => setTimeout(r, 300 / count));
 
-            // --- めくる演出 ---
-            await new Promise(r => setTimeout(r, 200));
-            cardInner.classList.add('is-flipped');
-
-            // 【カットイン演出】（めくるのとほぼ同時に開始）
+            // 【重要：ここから演出判定】
             if (item.rarity === "ssr" || item.isNew) {
-                await new Promise(r => setTimeout(r, 300)); // 少しめくれるのを待つ
+                // 紹介画面の演出（カードは裏面のまま）
                 canClickToNext = false;
                 newOverlay.style.display = 'flex';
                 newOverlay.style.pointerEvents = 'auto';
@@ -278,9 +273,16 @@
                 await new Promise(r => setTimeout(r, 500));
                 canClickToNext = true;
                 await new Promise(resolve => { resolveGachaWait = resolve; });
+                
+                // --- 紹介が終わって一覧に戻ったタイミングでめくる！ ---
+                cardInner.classList.add('is-flipped');
+            } else {
+                // 演出がないカード（Rなど）は並んだらすぐめくる
+                await new Promise(r => setTimeout(r, 100));
+                cardInner.classList.add('is-flipped');
             }
 
-            // カードをタップした時の詳細表示
+            // カードタップで詳細表示
             cardInner.onclick = (e) => {
                 e.stopPropagation();
                 showDetail(item);
