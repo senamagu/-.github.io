@@ -91,6 +91,20 @@
     const resultContainer = document.getElementById('result-container');
     const overlay = document.getElementById('overlay');
     const retryBtn = document.getElementById('retry-btn');
+    
+    //キャラリスト
+    const charList = {
+        ssr: ["🐉", "👸", "💎", "☄️"],
+        sr:  ["⚔️", "🛡️", "🔥", "💧"],
+        r:   ["🌿", "🪵", "🦴", "✉️"]
+    };
+
+    // ... ガチャロジックの中で ...
+    const pool = charList[rarity];
+    const character = pool[Math.floor(Math.random() * pool.length)];
+
+    // ... カード生成の中で ...
+    card.innerHTML = `<div style="font-size:40px">${character}</div><div style="font-size:12px">${rarity.toUpperCase()}</div>`;
 
     let lastCount = 1; // 直前に引いた回数を保存
 
