@@ -20,12 +20,52 @@
             background: black; 
             cursor: pointer;
         }
+
+        /* --- 背景画像の切り替え --- */
+/* SR以上の時の背景 */
+.gate-bg.sr-confirmed {
+    background-image: url('./IMG_SR_BG.jpeg'), linear-gradient(to bottom, #442222, #000); /* SR用画像 */
+    filter: saturate(1.5) contrast(1.2);
+}
+
+/* SSR確定の時の背景 */
+.gate-bg.ssr-confirmed {
+    background-image: url('./IMG_SSR_BG.jpeg'), linear-gradient(to bottom, #444422, #000); /* SSR用画像 */
+    filter: saturate(2) brightness(1.2) contrast(1.2);
+    box-shadow: inset 0 0 100px gold;
+}
+
+/* --- オーブ演出 --- */
+.orb-container {
+    position: absolute; width: 100%; height: 100%;
+    top: 0; left: 0; pointer-events: none; z-index: 3;
+}
+
+.orb {
+    position: absolute;
+    width: 10px; height: 10px;
+    background: white; border-radius: 50%;
+    filter: blur(2px);
+    opacity: 0;
+}
+
+/* オーブが奥から手前に飛んでくるアニメーション */
+@keyframes orbFly {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; top: 50%; left: 50%; }
+    20% { opacity: 1; }
+    100% { 
+        transform: translate(-50%, -50%) scale(4); 
+        opacity: 0;
+        /* ランダムな方向に飛ばすためにJSで計算 */
+    }
+}
+        
         /* 召喚の背景画像（ここに好きなURLを入れる） */
 .gate-bg {
     position: absolute; 
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: url('./background/R.jpeg'), linear-gradient(to bottom, #1a1a2e, #16213e);
+    background: url('../background/R.jpeg'), linear-gradient(to bottom, #1a1a2e, #16213e);
     background-size: cover;
     background-position: center;
     z-index: 1;
@@ -201,28 +241,89 @@
         gateText.style.display = 'block';
     }
 
-// 待機画面をタップしてガチャ実行
+    // 待機画面をタップしてガチャ実行
     async function executeGacha() {
-        if (gateBg.classList.contains('gate-zoom-animation')) return; // 二重タップ防止
+        if (gateBg.classList.contains('gate-zoom-animation')) return;
 
-        // 1. テキストをフェードアウト
+        // 1. 先に結果を計算
+        const results = generateResults(lastCount);
+        const hasSSR = results.some(item => item.rarity === "ssr");
+        const hasSR = results.some(item => item.rarity === "sr");
+
+        // 2. レア度に応じて背景クラスを付与
+        if (hasSSR) {
+            gateBg.classList.add('ssr-confirmed');
+            createOrbs(true); // SSR用の金のオーブ
+        } else if (hasSR) {
+            gateBg.classList.add('sr-confirmed');
+            createOrbs(false); // 通常の青白いオーブ
+        }
+
         const gateText = document.querySelector('.gate-text');
         gateText.classList.add('fade-out');
 
-        // 2. 「ズームアウト → ズームイン」のアニメーション開始
+        // 3. アニメーション開始
         gateBg.classList.add('gate-zoom-animation');
         
-        // --- 演出のタイムライン ---
-        
-        // 1.2秒後：画面が迫ってきて視界が埋まり始める頃にフラッシュ開始
         await new Promise(r => setTimeout(r, 1200));
         flashOverlay.classList.add('do-flash');
         
-        // 2秒後：完全に光に包まれたタイミングで結果画面へ
         await new Promise(r => setTimeout(r, 800));
-        startGacha(lastCount);
+        
+        // 「超絶激レア反応！」を飛ばして直接結果表示へ
+        startGachaWithResults(results);
     }
 
+    function startGachaWithResults(results) {
+        document.getElementById('gate-screen').classList.remove('active');
+        document.getElementById('result-screen').classList.add('active');
+        
+        // 既存の「召喚中...」オーバーレイをスキップして、すぐにカード表示を開始
+        overlay.style.display = "none";
+        renderCards(results); 
+    }
+    
+// オーブを生成する関数
+    function createOrbs(isSSR) {
+        const container = document.createElement('div');
+        container.className = 'orb-container';
+        document.getElementById('gate-screen').appendChild(container);
+
+        const count = isSSR ? 40 : 15; // SSRならオーブ増量
+        const color = isSSR ? 'gold' : '#00bcd4';
+
+        for (let i = 0; i < count; i++) {
+            const orb = document.createElement('div');
+            orb.className = 'orb';
+            orb.style.background = color;
+            orb.style.boxShadow = `0 0 10px ${color}`;
+            
+            // ランダムな方向に飛ばす
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 400 + Math.random() * 400;
+            const tx = Math.cos(angle) * distance;
+            const ty = Math.sin(angle) * distance;
+
+            orb.style.left = '50%';
+            orb.style.top = '50%';
+            orb.style.animation = `orbFly 1.5s ease-out forwards`;
+            orb.style.animationDelay = `${Math.random() * 1.5}s`;
+            
+            // 動きをカスタム
+            orb.animate([
+                { transform: `translate(-50%, -50%) scale(0)`, opacity: 0 },
+                { opacity: 1, offset: 0.2 },
+                { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(3)`, opacity: 0 }
+            ], {
+                duration: 1500,
+                delay: Math.random() * 1000,
+                fill: 'forwards'
+            });
+
+            container.appendChild(orb);
+        }
+    }
+    
     function resumeGacha() {
         if (!canClickToNext) return; 
         newOverlay.style.display = 'none';
