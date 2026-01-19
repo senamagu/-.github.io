@@ -74,7 +74,7 @@
     </style>
 </head>
 <body>
-
+<div id="flash-overlay" class="flash"></div>
 <div id="lobby-screen" class="screen active">
     <h1>伝説の召喚</h1>
     <div class="btn-group">
@@ -110,33 +110,44 @@
     };
 
     async function startGacha(count) {
-        lastCount = count;
-        const results = [];
-        let hasRare = false;
+    lastCount = count;
+    const results = [];
+    let topRarity = "r"; // 一番高いレアリティを保持
 
-        // 1. 先に計算
-        for (let i = 0; i < count; i++) {
-            const rand = Math.random();
-            let rarity = "r";
-            if (rand < 0.03) { rarity = "ssr"; hasRare = true; }
-            else if (rand < 0.20) { rarity = "sr"; hasRare = true; }
-            
-            // 絵文字をランダムに選ぶ
-            const icons = charList[rarity];
-            const icon = icons[Math.floor(Math.random() * icons.length)];
-            results.push({ rarity, icon });
+    for (let i = 0; i < count; i++) {
+        const rand = Math.random();
+        let rarity = "r";
+        if (rand < 0.03) { rarity = "ssr"; topRarity = "ssr"; }
+        else if (rand < 0.20) { 
+            rarity = "sr"; 
+            if (topRarity !== "ssr") topRarity = "sr"; 
         }
+        
+        const icons = charList[rarity];
+        const icon = icons[Math.floor(Math.random() * icons.length)];
+        results.push({ rarity, icon });
+    }
 
-        // 2. 演出
-        overlay.innerText = "召喚中...";
-        overlay.classList.remove('rare-effect');
+        // --- 演出フェーズ ---
         overlay.style.display = "flex";
+        overlay.className = ""; // クラスをリセット
+        overlay.innerText = "召喚中...";
         await new Promise(r => setTimeout(r, 800));
 
-        if (hasRare) {
-            overlay.innerText = "高エネルギー反応発生！";
+        if (topRarity === "ssr") {
+            // SSR演出：虹色 + フラッシュ
+            overlay.innerText = "超絶激レア反応！！";
+            overlay.classList.add('ssr-effect');
+            document.getElementById('flash-overlay').classList.add('do-flash');
+            setTimeout(() => document.getElementById('flash-overlay').classList.remove('do-flash'), 500);
+            await new Promise(r => setTimeout(r, 2000));
+        } else if (topRarity === "sr") {
+            // SR演出：金色
+            overlay.innerText = "高エネルギー反応！";
             overlay.classList.add('rare-effect');
             await new Promise(r => setTimeout(r, 1200));
+        } else {
+            await new Promise(r => setTimeout(r, 500));
         }
 
         // 3. 画面切り替え
