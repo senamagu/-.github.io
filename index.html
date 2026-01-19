@@ -15,28 +15,32 @@
         /* ロビー背景 */
         #lobby-screen { background: radial-gradient(circle, #0042A9, #000); }
 
-/* 召喚の背景画像（初期状態：少し大きめに配置） */
-    .gate-bg {
-        position: absolute; 
-        width: 110%; height: 110%; /* 少しデカめに設定 */
-        top: -5%; left: -5%;     /* 中央寄せ */
-        background-size: cover;
-        background-position: center;
-        /* transitionをtransformとfilterに限定 */
-        transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), filter 1s;
-        z-index: 1;
-    }
+/* 召喚の背景画像（初期状態） */
+.gate-bg {
+    position: absolute; 
+    width: 120%; height: 120%; /* 余裕をもって120%に */
+    top: -10%; left: -10%;     /* 中央寄せ */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    /* transformを明示的に初期化 */
+    transform: scale(1);
+    transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), filter 1s;
+    z-index: 1;
+    display: block !important; /* 非表示にならないよう強制 */
+}
 
-    /* 1. 少し下がる（タメ） */
-    .gate-prepare { 
-        transform: scale(0.9); /* 0.1分小さくなるが、元の1.1倍あるので画面は切れない */
-    }
+/* 1. 少し下がる（タメ） */
+.gate-prepare { 
+    /* 1.2倍の状態で0.8倍にするので、0.96倍となり画面端は切れません */
+    transform: scale(0.8) !important; 
+}
 
-    /* 2. ズームアップ（突入） */
-    .gate-zoom-in { 
-        transform: scale(3);   /* 一気に拡大 */
-        filter: brightness(3) blur(5px); /* 発光しながらボヤける */
-    }
+/* 2. ズームアップ（突入） */
+.gate-zoom-in { 
+    transform: scale(4) !important;   
+    filter: brightness(3) blur(5px); 
+}
 
         .gate-text {
             position: relative; z-index: 2; font-size: 32px; font-weight: bold;
@@ -173,45 +177,52 @@
     };
 
     // ロビーから待機画面へ移動
-    function prepareGacha(count) {
-        lastCount = count;
-        let topRarity = "r";
-        for (let i = 0; i < count; i++) {
-            const rand = Math.random();
-            let rarity = rand < 0.05 ? "ssr" : (rand < 0.25 ? "sr" : "r");
-            if (rarity === "ssr") topRarity = "ssr";
-            else if (rarity === "sr" && topRarity !== "ssr") topRarity = "sr";
-        }
-        // 背景画像をセット
-        gateBg.style.backgroundImage = BG_IMAGES[topRarity] || BG_IMAGES.default;
-        // 中身の結果はstartGachaに引き継ぐために一時保存するか、
-        // もしくはここでは背景の決定のみを行い、実際の抽選はstartGachaに任せる形にします。
-        // 今回は「背景だけいじる」ため、見た目の切り替えを優先します。
-
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('gate-screen').classList.add('active');
-        
-        // アニメーション用クラスをリセット
-        gateBg.classList.remove('gate-prepare', 'gate-zoom-in');
+function prepareGacha(count) {
+    lastCount = count;
+    
+    // 1. まず抽選（背景決定のため）
+    let topRarity = "r";
+    for (let i = 0; i < count; i++) {
+        const rand = Math.random();
+        let rarity = rand < 0.05 ? "ssr" : (rand < 0.25 ? "sr" : "r");
+        if (rarity === "ssr") topRarity = "ssr";
+        else if (rarity === "sr" && topRarity !== "ssr") topRarity = "sr";
     }
 
-    // 待機画面をタップしてガチャ実行
-    async function executeGacha() {
-        // 1. 少し下がる（タメ）
-        gateBg.classList.add('gate-prepare');
-        await new Promise(r => setTimeout(r, 400)); // タメの時間
+    // 2. 背景画像をセット（!重要: ここで確実に書き換え）
+    const bgUrl = BG_IMAGES[topRarity] || BG_IMAGES.default;
+    gateBg.style.backgroundImage = bgUrl;
+    
+    // 3. アニメーションと状態のリセット
+    gateBg.classList.remove('gate-prepare', 'gate-zoom-in');
+    gateBg.style.transform = 'scale(1)'; // 強制リセット
+    gateBg.style.filter = 'none';
 
-        // 2. ズームアップ（突入）
-        gateBg.classList.remove('gate-prepare');
-        gateBg.classList.add('gate-zoom-in');
-        
-        // ホワイトアウト
-        await new Promise(r => setTimeout(r, 600));
-        flashOverlay.classList.add('do-flash');
-        
-        await new Promise(r => setTimeout(r, 400));
-        startGacha(lastCount);
-    }
+    // 4. 画面切り替え
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('gate-screen').classList.add('active');
+}
+
+// 待機画面をタップしてガチャ実行
+async function executeGacha() {
+    // 重複クリック防止
+    if (gateBg.classList.contains('gate-prepare') || gateBg.classList.contains('gate-zoom-in')) return;
+
+    // 1. 少し下がる（タメ）
+    gateBg.classList.add('gate-prepare');
+    await new Promise(r => setTimeout(r, 600)); // タメを少し長くして「溜めてる感」を出す
+
+    // 2. ズームアップ（突入）
+    gateBg.classList.remove('gate-prepare');
+    gateBg.classList.add('gate-zoom-in');
+    
+    // 3. ホワイトアウト
+    await new Promise(r => setTimeout(r, 500));
+    flashOverlay.classList.add('do-flash');
+    
+    await new Promise(r => setTimeout(r, 500));
+    startGacha(lastCount);
+}
 
     function resumeGacha() {
         if (!canClickToNext) return; 
