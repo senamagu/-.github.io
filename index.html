@@ -87,6 +87,19 @@
 
         #single-card-display { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .single-card-inner { width: 240px; height: 340px; background: #333; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+
+        /* 紹介画面用の巨大カードラッパー */
+        .huge-card-wrapper {
+            perspective: 1000px;
+            margin-bottom: 20px;
+            width: 200px;
+            height: 280px;
+        }
+        #huge-card-inner {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
     </style>
 </head>
 <body id="main-body">
@@ -246,38 +259,63 @@
             wrapper.classList.add('show-wrapper');
             await new Promise(r => setTimeout(r, 300 / count));
 
-            // 【重要：ここから演出判定】
+            // 【演出判定】
             if (item.rarity === "ssr" || item.isNew) {
-                // 紹介画面の演出（カードは裏面のまま）
                 canClickToNext = false;
                 newOverlay.style.display = 'flex';
                 newOverlay.style.pointerEvents = 'auto';
-                
+
+                // 1. 最初は「裏面」の巨大カードを表示
+                newOverlay.innerHTML = `
+                    <div class="huge-card-wrapper" id="huge-card">
+                        <div class="card" id="huge-card-inner">
+                            <div class="card-back ${item.rarity === 'ssr' ? 'back-ssr' : 'back-sr'}" style="width:200px; height:280px; font-size:100px;"></div>
+                            <div class="card-front ${item.rarity}" style="width:200px; height:280px; transform: rotateY(180deg);">
+                                <div style="font-size: 100px;">${item.icon}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // 2. SSRならセリフを先に出す
                 if (item.rarity === "ssr") {
-                    newOverlay.innerHTML = `<div class="quote-text">「${item.quote}」</div>`;
+                    const quote = document.createElement('div');
+                    quote.className = 'quote-text';
+                    quote.innerText = `「${item.quote}」`;
+                    newOverlay.prepend(quote); // カードの上に挿入
+                    
                     body.classList.add('super-shake');
                     await new Promise(r => setTimeout(r, 1200));
                     body.classList.remove('super-shake');
-                    flashOverlay.classList.add('do-flash');
-                    setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
                 }
 
-                newOverlay.innerHTML = `
-                    <div class="huge-rarity" style="color:${item.rarity==='ssr'?'gold':'#f5576c'}">${item.rarity.toUpperCase()}</div>
-                    <div class="huge-icon">${item.icon}</div>
-                    <div class="huge-name">${item.name}</div>
-                    <div class="quote-text" style="font-size:18px; margin-top:10px;">「${item.quote}」</div>
-                    <div class="tap-to-close">- TOUCH TO SCREEN -</div>
-                `;
+                // 3. 【ここが本番】巨大カードをめくる！
+                await new Promise(r => setTimeout(r, 200));
+                const hugeInner = document.getElementById('huge-card-inner');
+                hugeInner.classList.add('is-flipped'); // 巨大カードがくるっ！
                 
+                // 同時にフラッシュ演出
+                flashOverlay.classList.add('do-flash');
+                setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
+
+                // 4. キャラ情報を表示
+                await new Promise(r => setTimeout(r, 400));
+                const info = document.createElement('div');
+                info.innerHTML = `
+                    <div class="huge-rarity" style="color:${item.rarity==='ssr'?'gold':'#f5576c'}">${item.rarity.toUpperCase()}</div>
+                    <div class="huge-name">${item.name}</div>
+                    <div class="tap-to-close" style="margin-top:20px;">- TOUCH TO SCREEN -</div>
+                `;
+                newOverlay.appendChild(info);
+
                 await new Promise(r => setTimeout(r, 500));
                 canClickToNext = true;
                 await new Promise(resolve => { resolveGachaWait = resolve; });
                 
-                // --- 紹介が終わって一覧に戻ったタイミングでめくる！ ---
+                // 5. 閉じた後、一覧のカードもめくっておく
                 cardInner.classList.add('is-flipped');
             } else {
-                // 演出がないカード（Rなど）は並んだらすぐめくる
+                // Rなどは並んだらすぐめくる
                 await new Promise(r => setTimeout(r, 100));
                 cardInner.classList.add('is-flipped');
             }
