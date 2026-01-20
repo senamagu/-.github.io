@@ -99,6 +99,25 @@
 
         .huge-card-wrapper { perspective: 1000px; margin-bottom: 20px; width: 200px; height: 280px; }
         #huge-card-inner { width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        /* カード表面の画像用スタイル */
+.card-img {
+    width: 80%;
+    height: 60%;
+    object-fit: contain; /* アスペクト比を維持 */
+    margin-bottom: 5px;
+    filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+}
+
+/* 特大表示用（NEW演出など） */
+.huge-img {
+    width: 200px;
+    height: 200px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 20px gold);
+    margin-bottom: 20px;
+}
+        
     </style>
 </head>
 <body id="main-body">
@@ -204,19 +223,19 @@ function playSE(key) {
 
     const charData = {
         ssr: [
-            { id: "dragon", icon: "🐉", name: "炎の竜王", quote: "我が焔に焼け焦げるがいい！" },
-            { id: "queen", icon: "👸", name: "光 of 女王", quote: "希望の光よ、世界を照らして。" },
-            { id: "diamond", icon: "💎", name: "蒼穹の宝珠", quote: "この輝き、誰にも渡さない。" }
+            { id: "dragon", icon: "🐉", img: "./images/IMG_6829.jpeg", name: "炎の竜王", quote: "我が焔に焼け焦げるがいい！" },
+            { id: "queen", icon: "👸", img: "./images/IMG_6829.jpeg", name: "光 of 女王", quote: "希望の光よ、世界を照らして。" },
+            { id: "diamond", icon: "💎", img: "./images/IMG_6829.jpeg", name: "蒼穹の宝珠", quote: "この輝き、誰にも渡さない。" }
         ],
         sr: [
-            { id: "sword", icon: "⚔️", name: "勇者の剣", quote: "この一撃で決める！" },
-            { id: "shield", icon: "🛡️", name: "守護者の盾", quote: "ここは一歩も通さないぜ。" },
-            { id: "fire", icon: "🔥", name: "灼熱の精霊", quote: "もっと熱くしてやるよ！" }
+            { id: "sword", icon: "⚔️", img: "./images/IMG_6835.jpeg", name: "勇者の剣", quote: "この一撃で決める！" },
+            { id: "shield", icon: "🛡️", img: "./images/IMG_6835.jpeg", name: "守護者の盾", quote: "ここは一歩も通さないぜ。" },
+            { id: "fire", icon: "🔥", img: "./images/IMG_6835.jpeg", name: "灼熱の精霊", quote: "もっと熱くしてやるよ！" }
         ],
         r: [
-            { id: "plant", icon: "🌿", name: "草原の番人", quote: "風が吹いているね。" },
-            { id: "wood", icon: "🪵", name: "森の木こり", quote: "良い材木が採れそうだ。" },
-            { id: "bone", icon: "🦴", name: "彷徨う魂", quote: "私は…どこにいるのだ…" }
+            { id: "plant", icon: "🌿", img: "./images/IMG_6839.jpeg", name: "草原の番人", quote: "風が吹いているね。" },
+            { id: "wood", icon: "🪵", img: "./images/IMG_6839.jpeg", name: "森の木こり", quote: "良い材木が採れそうだ。" },
+            { id: "bone", icon: "🦴", img: "./images/IMG_6839.jpeg", name: "彷徨う魂", quote: "私は…どこにいるのだ…" }
         ]
     };
 
@@ -368,7 +387,7 @@ function playSE(key) {
             const front = document.createElement('div');
             front.className = `card-front ${item.rarity}`;
             front.innerHTML = `
-                <div style="font-size: 40px;">${item.icon}</div>
+                <div style="font-size: 40px;">${item.img}</div>
                 <div style="font-size: 14px; margin-top: 10px;">${item.rarity.toUpperCase()}</div>
                 ${item.isNew ? '<div class="new-badge">NEW!</div>' : ''}
             `;
@@ -418,7 +437,7 @@ function playSE(key) {
                     // ★ここで途切れていた記述を修正済み
                     const charInfo = document.createElement('div');
                     charInfo.innerHTML = `
-                        <div class="huge-icon" style="font-size:180px;">${item.icon}</div>
+                        <div class="huge-icon" style="font-size:180px;">${item.img}</div>
                         <div class="huge-rarity" style="color:gold; font-size:50px;">${item.rarity.toUpperCase()}</div>
                         <div class="huge-name">${item.name}</div>
                         <div class="tap-to-close">- TOUCH TO SCREEN -</div>
@@ -465,7 +484,7 @@ function playSE(key) {
     }
 
     function showDetail(item) {
-        document.getElementById('card-detail-icon').innerText = item.icon;
+        document.getElementById('card-detail-icon').innerHTML = `<img src="${item.img}" style="width:150px; height:150px; object-fit:contain;">`;
         document.getElementById('card-detail-rarity').innerText = item.rarity.toUpperCase();
         document.getElementById('card-detail-name').innerText = item.name;
         document.getElementById('detail-inner').className = `single-card-inner ${item.rarity}`;
