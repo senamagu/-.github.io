@@ -307,8 +307,11 @@
             // 裏面
             const back = document.createElement('div');
             back.className = "card-back";
-            if (item.rarity === "ssr") back.classList.add('back-ssr');
-            else if (item.rarity === "sr") back.classList.add('back-sr');
+            if (item.rarity === "ssr") {
+                back.classList.add('back-ssr');
+            } else if (item.rarity === "sr") { // ← ここが単なる else になっていると R も光ります！
+                back.classList.add('back-sr');
+            }
 
             // 表面
             const front = document.createElement('div');
@@ -368,7 +371,7 @@
                     `;
                     newOverlay.appendChild(charInfo);
 
-                } else if{
+                } else {
                     // NEW演出（RまたはSR）
                     // レアリティがSRの時だけ 'back-sr' クラスを適用する
                     const backClass = (item.rarity === "sr") ? "back-sr" : "";
