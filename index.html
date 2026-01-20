@@ -369,7 +369,10 @@
                     newOverlay.appendChild(charInfo);
 
                 } else {
-                    // NEW演出
+                    // NEW演出（RまたはSR）
+                    // レアリティがSRの時だけ 'back-sr' クラスを適用する
+                    const backClass = (item.rarity === "sr") ? "back-sr" : "";
+                    
                     newOverlay.innerHTML = `
                         <div class="huge-card-wrapper">
                             <div class="card" id="huge-card-inner">
