@@ -351,6 +351,11 @@
                     newOverlay.style.background = "white"; 
                     const quoteDiv = document.createElement('div');
                     quoteDiv.className = 'quote-text';
+                    
+                    quoteDiv.style.color = "black"; // 文字色を黒に
+                    quoteDiv.style.fontWeight = "bold"; // 少し太くして存在感を出す
+                    quoteDiv.style.textShadow = "0 0 15px rgba(0,0,0,0.3), 0 0 30px rgba(0,0,0,0.1)"; // 黒いオーラのような影
+                    
                     quoteDiv.innerText = `「${item.quote}」`;
                     newOverlay.appendChild(quoteDiv);
 
@@ -361,6 +366,7 @@
                     flashOverlay.classList.add('do-flash');
                     newOverlay.style.background = "rgba(0, 0, 0, 0.95)"; 
                     quoteDiv.style.color = "white";
+                    quoteDiv.style.fontWeight = "normal";
                     quoteDiv.style.textShadow = "0 0 15px gold, 0 0 30px gold";
                     setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
 
