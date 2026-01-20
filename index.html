@@ -147,22 +147,22 @@
 
     // --- 待機画面の背景の設定 ---
     const BG_IMAGES = {
-        default: 'url("https://min-chi.material.jp/mc/materials/background-c/building_hallway/building_hallway_1.jpg")',
-        sr: 'url("https://min-chi.material.jp/mc/materials/background-c/building_hallway/building_hallway_2.jpg")',
-        ssr: 'url("https://min-chi.material.jp/mc/materials/background-c/building_hallway/building_hallway_4.jpg")'
+        default: 'url("./background/R.jpeg")',
+        sr: 'url("./background/SR.jpeg")',
+        ssr: 'url("./background/SSR.jpeg")'
     };
 
     // --- 効果音・BGMの設定 ---
 const sounds = {
-    tap: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/tap.mp3'), // ボタン押し
-    gateLoop: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/tap.mp3'), // 待機中BGM
-    gateTap: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/loop.mp3'), // 待機演出
-    cardSet: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/set.mp3'), // ★追加：カードが置かれる音
-    flipNormal: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/flip.mp3'), // R/SRめくり
-    Upgrade: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/flip.mp3'), // 昇格演出？
-    UpgradeDef: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/flip.mp3'), // 昇格演出！
-    ssrQuote: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/quote.mp3'), // SSRセリフ時（重低音）
-    ssrAppearance: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/ssr.mp3') // SSR登場（キラキラ！）
+    tap: new Audio('./sounds/Tap.mp3'), // ボタン押し
+    gateLoop: new Audio('./sounds/gateLoop.mp3'), // 待機中BGM
+    gateTap: new Audio('./sounds/gateTap.mp3'), // 待機演出
+    cardSet: new Audio('./sounds/cardSet.mp3'), // ★追加：カードが置かれる音
+    flipNormal: new Audio('./sounds/flipNormal.mp3'), // R/SRめくり
+    Upgrade: new Audio('./sounds/Upgrade.mp3'), // 昇格演出？
+    UpgradeDef: new Audio('./sounds/UpgradeDef.mp3'), // 昇格演出！
+    ssrQuote: new Audio('./sounds/ssrQuote.mp3'), // SSRセリフ時（重低音）
+    ssrAppearance: new Audio('./sounds/ssrAppearance.mp3') // SSR登場（キラキラ！）
 };
 
 // 待機中BGMはループさせる
