@@ -508,17 +508,22 @@ function playSE(key) {
                     
                     newOverlay.innerHTML = `
                         <div class="huge-card-wrapper">
-                            <div class="card" id="huge-card-inner">
-                                <div class="card-back ${backClass}" style="width:200px; height:280px;"></div>
-                                <div class="card-front ${item.rarity}" style="width:200px; height:280px; transform: rotateY(180deg);">
-                                    <img src="${item.img}" class="huge-img">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="huge-rarity" style="color:${item.rarity === 'sr' ? '#f5576c' : '#aaa'}">${item.rarity.toUpperCase()}</div>
-                        <div class="huge-name">${item.name}</div>
-                        <div class="tap-to-close">- TOUCH TO SCREEN -</div>
-                    `;
+            <div class="card" id="huge-card-inner">
+                <div class="card-back ${backClass}" style="width:200px; height:280px;"></div>
+                <div class="card-front ${item.rarity}" style="width:200px; height:280px; transform: rotateY(180deg); overflow:visible;">
+                    <div class="card-img-container">
+                        <img src="${item.img}" class="card-img">
+                    </div>
+                    <div class="card-info" style="padding: 10px 0;">
+                        <div style="font-weight: bold; font-size: 18px;">${item.rarity.toUpperCase()}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="huge-rarity" style="color:${item.rarity === 'sr' ? '#f5576c' : '#aaa'}">${item.rarity.toUpperCase()}</div>
+        <div class="huge-name">${item.name}</div>
+        <div class="tap-to-close">- TOUCH TO SCREEN -</div>
+    `;
                     await new Promise(r => setTimeout(r, 300));
                     playSE('flipNormal');
                     document.getElementById('huge-card-inner').classList.add('is-flipped');
