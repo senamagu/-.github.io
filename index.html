@@ -165,66 +165,86 @@
         .super-shake { animation: superShake 0.4s infinite; }
         @keyframes superShake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-3px, -2px); } 100% { transform: translate(2px, 2px); } }
 
-/* 詳細カード本体を大きく修正 */
+/* 詳細表示画面全体（真っ黒な背景） */
+#single-card-display {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.95); /* より暗くしてカードを際立たせる */
+    z-index: 9999; /* 他の演出より絶対上に */
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-sizing: border-box;
+    padding: 20px;
+}
+
+/* カード外側のセリフ（上部） */
+.outside-quote {
+    font-size: clamp(18px, 4vw, 26px); /* 画面サイズに合わせて自動調整 */
+    color: white;
+    font-style: italic;
+    text-shadow: 0 0 15px gold;
+    margin-bottom: 20px;
+    max-width: 90%;
+    text-align: center;
+    animation: fadeInDown 0.5s ease-out;
+}
+
+/* カード本体（サイズを可変に修正） */
 .single-card-inner {
-    width: 85vw !important;    /* 画面横幅の85%まで拡大 */
-    max-width: 400px !important; /* スマホでもはみ出さない上限 */
-    height: 60vh !important;   /* 画面高さの60%を使用 */
-    max-height: 550px !important;
-    border-radius: 20px;
+    width: 70vw !important;    /* 画面幅の70% */
+    max-width: 350px !important; 
+    height: 50vh !important;   /* 画面高さの50%（ここが重要！） */
+    max-height: 500px !important;
+    border-radius: 15px;
     position: relative;
     overflow: hidden;
-    border: 4px solid #555;
+    border: 3px solid #555;
     background: #111;
-    box-shadow: 0 0 50px rgba(0,0,0,0.8);
-    transition: transform 0.3s;
+    box-shadow: 0 0 40px rgba(0,0,0,0.8);
+    flex-shrink: 0; /* 潰れないように固定 */
 }
 
-/* 画像が枠いっぱいに広がるように固定 */
-#card-detail-icon {
+/* 画像の表示方法を修正 */
+#card-detail-icon, #card-detail-icon img {
     width: 100%;
     height: 100%;
-}
-
-#card-detail-icon img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* 枠に合わせて切り抜き表示（迫力が出ます） */
+    object-fit: cover;
     display: block;
 }
 
-/* 外側のセリフ（もっと大きく、読みやすく） */
-.outside-quote {
-    font-size: 24px;
-    font-weight: bold;
-    color: white;
-    margin-bottom: 20px;
-    padding: 0 20px;
-    text-shadow: 0 0 10px rgba(0,0,0,1), 0 0 20px gold;
-}
-
-/* 外側の名前とレア度 */
+/* カード外側の情報（下部） */
 .outside-info {
     margin-top: 20px;
+    text-align: center;
+    animation: fadeInUp 0.5s ease-out;
 }
 
 #card-detail-rarity {
-    font-size: 50px; /* レア度はドカンと大きく */
-    letter-spacing: 10px;
+    font-size: 48px;
+    font-weight: bold;
+    font-style: italic;
+    line-height: 1;
 }
 
 #card-detail-name {
-    font-size: 24px;
+    font-size: 22px;
     color: white;
-    border-bottom: 2px solid rgba(255,255,255,0.3);
+    margin-top: 10px;
     padding-bottom: 5px;
+    border-bottom: 2px solid rgba(255,255,255,0.3);
 }
 
 .tap-to-close {
-    margin-top: 40px;
-    color: #666;
-    letter-spacing: 2px;
+    margin-top: 30px;
+    color: #888;
     font-size: 14px;
+    letter-spacing: 2px;
 }
 
 /* アニメーション */
@@ -624,37 +644,36 @@ function playSE(key) {
     }
 
 function showDetail(item) {
-    // 1. 画像をセット（スタイルはCSSに任せる）
+    // 1. 画像
     document.getElementById('card-detail-icon').innerHTML = `<img src="${item.img}">`;
     
     // 2. セリフ
     const quoteEl = document.getElementById('card-detail-quote');
     quoteEl.innerText = item.quote ? `「${item.quote}」` : "";
+    quoteEl.style.textShadow = item.rarity === 'ssr' ? "0 0 20px gold" : "0 0 10px white";
     
     // 3. レアリティ
     const rarityLabel = document.getElementById('card-detail-rarity');
     rarityLabel.innerText = item.rarity.toUpperCase();
-    
-    // レアリティごとの色指定
-    if (item.rarity === 'ssr') {
+    if(item.rarity === 'ssr') {
         rarityLabel.style.color = 'gold';
-        rarityLabel.style.textShadow = "0 0 20px orange";
-    } else if (item.rarity === 'sr') {
+        rarityLabel.style.textShadow = "0 0 15px orange";
+    } else if(item.rarity === 'sr') {
         rarityLabel.style.color = '#f5576c';
-        rarityLabel.style.textShadow = "0 0 15px #f5576c";
+        rarityLabel.style.textShadow = "0 0 10px #f5576c";
     } else {
-        rarityLabel.style.color = 'white';
+        rarityLabel.style.color = '#ccc';
         rarityLabel.style.textShadow = "none";
     }
     
     // 4. 名前
     document.getElementById('card-detail-name').innerText = item.name;
 
-    // 5. 枠のレアリティクラスを更新
+    // 5. クラス付与（枠を光らせる）
     const detailInner = document.getElementById('detail-inner');
     detailInner.className = `single-card-inner ${item.rarity}`;
     
-    // 6. 表示
+    // 6. 表示開始
     document.getElementById('single-card-display').style.display = 'flex';
 }
 
