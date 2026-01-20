@@ -58,7 +58,53 @@
         .is-flipped { transform: rotateY(180deg); }
         .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .card-back { background: #444; border: 2px solid #666; background-image: repeating-linear-gradient(45deg, #333 0, #333 10px, #444 10px, #444 20px); }
-        .card-front { transform: rotateY(180deg); background: #333; }
+        .card-front {
+            transform: rotateY(180deg);
+            background: #333;
+            overflow: hidden; /* 画像が角丸からはみ出ないようにマスク */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end; /* テキストを下に寄せる */
+        }
+
+        /* 画像をカード全面に広げる */
+.card-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 枠いっぱいに広げる */
+    z-index: 1;
+}
+
+/* レアリティ文字などの情報を画像の上に浮かせる */
+.card-info {
+    position: relative;
+    z-index: 2;
+    background: rgba(0, 0, 0, 0.6); /* 文字を見やすくするための半透明背景 */
+    width: 100%;
+    padding: 5px 0;
+    font-size: 12px;
+}
+
+/* 特大演出用の画像（さらにデカく！） */
+.huge-img {
+    width: 120%; /* 画面からはみ出すくらいの迫力 */
+    max-width: 500px;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 30px gold);
+    margin-bottom: 20px;
+    animation: floating 3s ease-in-out infinite; /* ふわふわ浮かせる */
+}
+
+@keyframes floating {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+        
         .back-sr { border: 2px solid #f5576c; box-shadow: 0 0 15px #f5576c; }
         .back-ssr { border: 2px solid gold; box-shadow: 0 0 20px gold; animation: goldPulse 1s infinite alternate; }
         @keyframes goldPulse { from { box-shadow: 0 0 10px gold; } to { box-shadow: 0 0 25px gold; } }
@@ -99,24 +145,6 @@
 
         .huge-card-wrapper { perspective: 1000px; margin-bottom: 20px; width: 200px; height: 280px; }
         #huge-card-inner { width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-
-        /* カード表面の画像用スタイル */
-.card-img {
-    width: 80%;
-    height: 60%;
-    object-fit: contain; /* アスペクト比を維持 */
-    margin-bottom: 5px;
-    filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
-}
-
-/* 特大表示用（NEW演出など） */
-.huge-img {
-    width: 200px;
-    height: 200px;
-    object-fit: contain;
-    filter: drop-shadow(0 0 20px gold);
-    margin-bottom: 20px;
-}
         
     </style>
 </head>
@@ -387,8 +415,11 @@ function playSE(key) {
             const front = document.createElement('div');
             front.className = `card-front ${item.rarity}`;
             front.innerHTML = `
-                <img src="${item.img}" class="card-img" onerror="this.src='https://placehold.jp/100x140.png'">
-                <div style="font-size: 14px; margin-top: 10px;">${item.rarity.toUpperCase()}</div>
+                <img src="${item.img}" class="card-img">
+                <div class="card-info">
+                    <div style="font-weight: bold;">${item.rarity.toUpperCase()}</div>
+                    <div style="font-size: 10px;">${item.name}</div>
+                </div>
                 ${item.isNew ? '<div class="new-badge">NEW!</div>' : ''}
             `;
 
@@ -438,8 +469,8 @@ function playSE(key) {
                     const charInfo = document.createElement('div');
                     charInfo.innerHTML = `
                         <img src="${item.img}" class="huge-img">
-                        <div class="huge-rarity" style="color:gold; font-size:50px;">${item.rarity.toUpperCase()}</div>
-                        <div class="huge-name">${item.name}</div>
+                        <div class="huge-rarity" style="color:gold; font-size:60px; text-shadow: 0 0 20px orange;">${item.rarity.toUpperCase()}</div>
+                        <div class="huge-name" style="font-size:40px;">${item.name}</div>
                         <div class="tap-to-close">- TOUCH TO SCREEN -</div>
                     `;
                     newOverlay.appendChild(charInfo);
