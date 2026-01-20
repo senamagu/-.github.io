@@ -444,7 +444,6 @@ function playSE(key) {
                 await new Promise(resolve => { resolveGachaWait = resolve; });
                 cardInner.classList.add('is-flipped');
             } else {
-                playSE('flipNormal');
                 await new Promise(r => setTimeout(r, 100));
                 cardInner.classList.add('is-flipped');
             }
