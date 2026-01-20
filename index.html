@@ -281,8 +281,8 @@ function playSE(key) {
         await new Promise(r => setTimeout(r, 400));
 
         gateBg.classList.remove('gate-prepare');
-        gateBg.classList.add('gate-zoom-in');
         playSE('gateTap');
+        gateBg.classList.add('gate-zoom-in');
         
         await new Promise(r => setTimeout(r, 600));
         flashOverlay.classList.add('do-flash');
@@ -399,7 +399,7 @@ function playSE(key) {
                     body.classList.add('super-shake');
                     await new Promise(r => setTimeout(r, 1500));
                     body.classList.remove('super-shake');
-                    setTimeout(() => playSE('ssrAppearance'), 1500);
+                    playSE('ssrAppearance');
 
                     flashOverlay.classList.add('do-flash');
                     newOverlay.style.background = "rgba(0, 0, 0, 0.95)"; 
