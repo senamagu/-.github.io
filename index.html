@@ -420,7 +420,6 @@ function playSE(key) {
 
                 } else {
                     // NEW演出（RまたはSR）
-                    setTimeout(() => playSE('flipNormal'), 100);
                     const backClass = (item.rarity === "sr") ? "back-sr" : "";
                     
                     newOverlay.innerHTML = `
@@ -437,6 +436,7 @@ function playSE(key) {
                         <div class="tap-to-close">- TOUCH TO SCREEN -</div>
                     `;
                     await new Promise(r => setTimeout(r, 300));
+                    playSE('flipNormal');
                     document.getElementById('huge-card-inner').classList.add('is-flipped');
                 }
 
@@ -444,7 +444,7 @@ function playSE(key) {
                 await new Promise(resolve => { resolveGachaWait = resolve; });
                 cardInner.classList.add('is-flipped');
             } else {
-                setTimeout(() => playSE('flipNormal'), 100);
+                playSE('flipNormal');
                 await new Promise(r => setTimeout(r, 100));
                 cardInner.classList.add('is-flipped');
             }
