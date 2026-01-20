@@ -171,10 +171,21 @@ sounds.gateLoop.volume = 0.5;
 // すべての音を事前にロードさせる（鳴らない問題の対策）
 Object.values(sounds).forEach(s => s.load());
     
-// 音を鳴らすヘルパー関数
 function playSE(key) {
-    sounds[key].currentTime = 0; // 再生位置をリセットして連続再生対応
-    sounds[key].play().catch(e => console.log("音再生エラー:", e));
+    const s = sounds[key];
+    if (!s) return;
+    
+    // 連続再生のために一旦停止してリセット
+    s.pause();
+    s.currentTime = 0;
+    
+    // playが拒否された時のエラーハンドリング
+    const playPromise = s.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.log("再生ブロックされました:", error);
+        });
+    }
 }
 
     let lastCount = 1;
