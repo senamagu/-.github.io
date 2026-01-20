@@ -165,22 +165,22 @@
         .super-shake { animation: superShake 0.4s infinite; }
         @keyframes superShake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-3px, -2px); } 100% { transform: translate(2px, 2px); } }
 
-/* 詳細表示画面全体（真っ黒な背景） */
+/* 詳細表示画面全体 */
 #single-card-display {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.95); /* より暗くしてカードを際立たせる */
-    z-index: 9999; /* 他の演出より絶対上に */
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 9999;
     display: none;
     flex-direction: column;
+    /* これらで上下左右の真ん中に寄せる */
     align-items: center;
-    justify-content: center;
+    justify-content: center; 
     cursor: pointer;
     box-sizing: border-box;
-    padding: 20px;
 }
 
 /* カード外側のセリフ（上部） */
