@@ -387,7 +387,7 @@ function playSE(key) {
             const front = document.createElement('div');
             front.className = `card-front ${item.rarity}`;
             front.innerHTML = `
-                <div style="font-size: 40px;">${item.img}</div>
+                <img src="${item.img}" class="card-img" onerror="this.src='https://placehold.jp/100x140.png'">
                 <div style="font-size: 14px; margin-top: 10px;">${item.rarity.toUpperCase()}</div>
                 ${item.isNew ? '<div class="new-badge">NEW!</div>' : ''}
             `;
@@ -437,7 +437,7 @@ function playSE(key) {
                     // ★ここで途切れていた記述を修正済み
                     const charInfo = document.createElement('div');
                     charInfo.innerHTML = `
-                        <div class="huge-icon" style="font-size:180px;">${item.img}</div>
+                        <img src="${item.img}" class="huge-img">
                         <div class="huge-rarity" style="color:gold; font-size:50px;">${item.rarity.toUpperCase()}</div>
                         <div class="huge-name">${item.name}</div>
                         <div class="tap-to-close">- TOUCH TO SCREEN -</div>
@@ -453,7 +453,7 @@ function playSE(key) {
                             <div class="card" id="huge-card-inner">
                                 <div class="card-back ${backClass}" style="width:200px; height:280px;"></div>
                                 <div class="card-front ${item.rarity}" style="width:200px; height:280px; transform: rotateY(180deg);">
-                                    <div style="font-size: 100px;">${item.img}</div>
+                                    <img src="${item.img}" class="huge-img">
                                 </div>
                             </div>
                         </div>
