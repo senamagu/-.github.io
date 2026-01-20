@@ -165,9 +165,53 @@
         .super-shake { animation: superShake 0.4s infinite; }
         @keyframes superShake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-3px, -2px); } 100% { transform: translate(2px, 2px); } }
 
-        #single-card-display { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        .single-card-inner { width: 240px; height: 340px; background: #333; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        /* 詳細表示の全体枠（黒背景の部分） */
+#single-card-display {
+    background: rgba(0, 0, 0, 0.9); /* より暗くしてカードを際立たせる */
+}
 
+/* 詳細表示のカード本体 */
+.single-card-inner {
+    width: 300px;  /* サイズを大きく */
+    height: 420px; /* サイズを大きく */
+    background: #333;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end; /* テキストを下寄せ */
+    position: relative;
+    overflow: visible; /* バッジ等があれば見えるように */
+    border: 2px solid #555;
+    transition: transform 0.3s;
+}
+
+/* 詳細画面でも画像を全面にマスクする */
+#card-detail-icon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    overflow: hidden;
+    border-radius: 13px; /* 親の角丸に合わせる */
+}
+
+#card-detail-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 全面表示 */
+}
+
+/* 詳細画面のテキスト情報 */
+#card-detail-rarity, #card-detail-name {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 5px 0;
+}
         .huge-card-wrapper { perspective: 1000px; margin-bottom: 20px; width: 200px; height: 280px; }
         #huge-card-inner { width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         
@@ -546,17 +590,26 @@ function playSE(key) {
         isGachaProcessing = false;
     }
 
-    function showDetail(item) {
-        document.getElementById('card-detail-icon').innerHTML = `<img src="${item.img}" style="width:150px; height:150px; object-fit:contain;">`;
-        document.getElementById('card-detail-rarity').innerText = item.rarity.toUpperCase();
-        document.getElementById('card-detail-name').innerText = item.name;
-        document.getElementById('detail-inner').className = `single-card-inner ${item.rarity}`;
-        document.getElementById('single-card-display').style.display = 'flex';
-    }
+function showDetail(item) {
+    // 画像をセット
+    document.getElementById('card-detail-icon').innerHTML = `
+        <img src="${item.img}">
+    `;
+    
+    // テキスト情報をセット
+    document.getElementById('card-detail-rarity').innerText = item.rarity.toUpperCase();
+    document.getElementById('card-detail-rarity').style.color = 
+        item.rarity === 'ssr' ? 'gold' : (item.rarity === 'sr' ? '#f5576c' : 'white');
+        
+    document.getElementById('card-detail-name').innerText = item.name;
 
-    function closeSingleCardDisplay() {
-        document.getElementById('single-card-display').style.display = 'none';
-    }
+    // レアリティに応じた光り（border）を付与
+    const detailInner = document.getElementById('detail-inner');
+    detailInner.className = `single-card-inner ${item.rarity}`;
+    
+    // 表示
+    document.getElementById('single-card-display').style.display = 'flex';
+}
 
     function toLobby() {
         isGachaProcessing = false; 
