@@ -144,18 +144,19 @@
     const newOverlay = document.getElementById('new-character-overlay');
     const body = document.getElementById('main-body');
     const gateBg = document.getElementById('gate-bg');
-    // 背景画像の定義（好きなURLに変更してください）
+
     const BG_IMAGES = {
-        default: 'url("https://min-chi.material.jp/mc/materials/background-c/building_hallway/building_hallway_1.jpg")', // 通常（R）
-        sr: 'url("https://min-chi.material.jp/mc/materials/background-c/building_hallway/building_hallway_2.jpg")',      // SR確定
-        ssr: 'url("https://min-chi.material.jp/mc/materials/background-c/building_hallway/building_hallway_4.jpg")'    // SSR確定
+        default: 'url("https://min-chi.material.jp/mc/materials/background-c/building_hallway/building_hallway_1.jpg")',
+        sr: 'url("https://min-chi.material.jp/mc/materials/background-c/building_hallway/building_hallway_2.jpg")',
+        ssr: 'url("https://min-chi.material.jp/mc/materials/background-c/building_hallway/building_hallway_4.jpg")'
     };
 
     let lastCount = 1;
+    let currentGachaResults = [];
     let ownedChars = new Set(); 
     let resolveGachaWait = null;
     let canClickToNext = false; 
-    let isGachaProcessing = false; // ★【追加】連打防止フラグ
+    let isGachaProcessing = false;
 
     const charData = {
         ssr: [
@@ -175,23 +176,56 @@
         ]
     };
 
-    // ロビーから待機画面へ移動
-    function prepareGacha(count) {  // ← この一行が抜けていました！
-    if (isGachaProcessing) return; // ★実行中は準備させない
-        
+    // ロビーから待機画面へ移動（データの先読み）
+    function prepareGacha(count) {
+        if (isGachaProcessing) return;
         lastCount = count;
+        currentGachaResults = []; 
+
         gateBg.classList.remove('gate-prepare', 'gate-zoom-in');
         
-        let topRarity = "default"; // デフォルトをセット
+        // 1. 中身を全て抽選して保存する
         for (let i = 0; i < count; i++) {
             const rand = Math.random();
-            let rarity = rand < 0.05 ? "ssr" : (rand < 0.25 ? "sr" : "r");
-            if (rarity === "ssr") topRarity = "ssr";
-            else if (rarity === "sr" && topRarity !== "ssr") topRarity = "sr";
+            let rarity = "r";
+            let isPromotion = false;
+
+            // レアリティ決定
+            if (rand < 0.05) {
+                rarity = "ssr";
+                // SSRの場合、10%で「昇格演出」にする
+                if (Math.random() < 0.10) { 
+                    isPromotion = true; 
+                }
+            } else if (rand < 0.25) {
+                rarity = "sr";
+            }
+
+            // キャラクター抽選
+            const pool = charData[rarity];
+            const char = pool[Math.floor(Math.random() * pool.length)];
+            const isNew = !ownedChars.has(char.id);
+            if (isNew) ownedChars.add(char.id);
+
+            // 保存（ここで push するのが重要！）
+            currentGachaResults.push({ ...char, rarity, isNew, isPromotion });
         }
 
-        // 背景切り替え（topRarityがrの場合はdefaultを使う）
-        const targetKey = (topRarity === "r") ? "default" : topRarity;
+        // 2. 背景決定ロジック
+        // 全結果を見て、背景を決める
+        let targetKey = "default";
+        
+        // 「昇格ではない、純粋なSSR」が含まれているか？
+        const hasRealSSR = currentGachaResults.some(r => r.rarity === "ssr" && !r.isPromotion);
+        // SR、または「昇格SSR」が含まれているか？
+        const hasSRorFake = currentGachaResults.some(r => r.rarity === "sr" || r.isPromotion);
+
+        if (hasRealSSR) {
+            targetKey = "ssr";
+        } else if (hasSRorFake) {
+            targetKey = "sr";
+        }
+
         gateBg.style.backgroundImage = BG_IMAGES[targetKey] || BG_IMAGES.default;
 
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -200,18 +234,15 @@
 
     // 待機画面をタップしてガチャ実行
     async function executeGacha() {
-        if (isGachaProcessing) return; // ★【重要】連打防止
+        if (isGachaProcessing) return;
         isGachaProcessing = true;
         
-        // 1. 少し下がる（タメ）
         gateBg.classList.add('gate-prepare');
-        await new Promise(r => setTimeout(r, 400)); // タメの時間
+        await new Promise(r => setTimeout(r, 400));
 
-        // 2. ズームアップ（突入）
         gateBg.classList.remove('gate-prepare');
         gateBg.classList.add('gate-zoom-in');
         
-        // ホワイトアウト
         await new Promise(r => setTimeout(r, 600));
         flashOverlay.classList.add('do-flash');
         
@@ -227,22 +258,14 @@
     }
 
     async function startGacha(count) {
-        const results = [];
+        const results = currentGachaResults; 
+        
+        // 演出用レアリティ判定
         let topRarity = "r";
-
-        for (let i = 0; i < count; i++) {
-            const rand = Math.random();
-            let rarity = rand < 0.05 ? "ssr" : (rand < 0.25 ? "sr" : "r");
-            if (rarity === "ssr") topRarity = "ssr";
-            else if (rarity === "sr" && topRarity !== "ssr") topRarity = "sr";
-
-            const pool = charData[rarity];
-            const char = pool[Math.floor(Math.random() * pool.length)];
-            const isNew = !ownedChars.has(char.id);
-            if (isNew) ownedChars.add(char.id);
-            results.push({ ...char, rarity, isNew });
-            //(全ての演出ループが終わった後)
-            isGachaProcessing = false; // ★演出が終わるまで次を引かせないならここ
+        if (results.some(r => r.rarity === "ssr" && !r.isPromotion)) {
+            topRarity = "ssr"; 
+        } else if (results.some(r => r.rarity === "sr" || r.isPromotion)) {
+            topRarity = "sr"; 
         }
 
         // 導入演出
@@ -271,33 +294,35 @@
         resultContainer.innerHTML = "";
         resultContainer.style.gridTemplateColumns = count === 1 ? "1fr" : "repeat(5, 1fr)";
 
-        // カード表示ループ
+        // カード生成ループ
         for (let item of results) {
+            
             // 昇格演出
-            if (Math.random() < 0.1 && item.rarity === "sr") {
+            if (item.isPromotion) {
                 overlay.style.display = "flex";
                 overlay.className = "";
                 overlay.innerText = "！？";
                 overlay.style.color = "gold";
                 await new Promise(r => setTimeout(r, 600));
-                item.rarity = "ssr";
+                
                 overlay.innerText = "SSRに昇格！！";
                 overlay.classList.add('ssr-effect');
                 await new Promise(r => setTimeout(r, 800));
                 overlay.style.display = "none";
             }
 
-            isGachaProcessing = false; // ★ここに入れるのが一番安全です！
-
             const wrapper = document.createElement('div');
             wrapper.className = "card-wrapper";
             const cardInner = document.createElement('div');
             cardInner.className = "card";
+            
+            // 裏面
             const back = document.createElement('div');
             back.className = "card-back";
             if (item.rarity === "ssr") back.classList.add('back-ssr');
             else if (item.rarity === "sr") back.classList.add('back-sr');
 
+            // 表面
             const front = document.createElement('div');
             front.className = `card-front ${item.rarity}`;
             front.innerHTML = `
@@ -315,7 +340,7 @@
             wrapper.classList.add('show-wrapper');
             await new Promise(r => setTimeout(r, 300 / count));
 
-            // 特殊演出
+            // 特殊演出 (SSR or NEW)
             if (item.rarity === "ssr" || item.isNew) {
                 canClickToNext = false;
                 newOverlay.style.display = 'flex';
@@ -326,10 +351,6 @@
                     newOverlay.style.background = "white"; 
                     const quoteDiv = document.createElement('div');
                     quoteDiv.className = 'quote-text';
-                    quoteDiv.style.fontSize = "36px";
-                    quoteDiv.style.color = "#555"; 
-                    quoteDiv.style.textShadow = "0 0 5px rgba(0,0,0,0.2)";
-                    quoteDiv.style.transition = "all 0.3s ease";
                     quoteDiv.innerText = `「${item.quote}」`;
                     newOverlay.appendChild(quoteDiv);
 
@@ -341,9 +362,9 @@
                     newOverlay.style.background = "rgba(0, 0, 0, 0.95)"; 
                     quoteDiv.style.color = "white";
                     quoteDiv.style.textShadow = "0 0 15px gold, 0 0 30px gold";
-                    quoteDiv.style.fontSize = "32px";
                     setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
 
+                    // ★ここで途切れていた記述を修正済み
                     const charInfo = document.createElement('div');
                     charInfo.innerHTML = `
                         <div class="huge-icon" style="font-size:180px;">${item.icon}</div>
@@ -352,7 +373,9 @@
                         <div class="tap-to-close">- TOUCH TO SCREEN -</div>
                     `;
                     newOverlay.appendChild(charInfo);
+
                 } else {
+                    // NEW演出
                     newOverlay.innerHTML = `
                         <div class="huge-card-wrapper">
                             <div class="card" id="huge-card-inner">
@@ -383,6 +406,8 @@
                 showDetail(item);
             };
         }
+
+        isGachaProcessing = false;
     }
 
     function showDetail(item) {
@@ -398,11 +423,10 @@
     }
 
     function toLobby() {
-        isGachaProcessing = false; // ★ロビーに戻ったらフラグ解除
+        isGachaProcessing = false; 
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById('lobby-screen').classList.add('active');
         flashOverlay.classList.remove('do-flash');
-        // 背景をリセット
         gateBg.style.backgroundImage = "none";
         gateBg.classList.remove('gate-prepare', 'gate-zoom-in');
     }
