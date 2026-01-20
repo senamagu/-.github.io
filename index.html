@@ -145,11 +145,35 @@
     const body = document.getElementById('main-body');
     const gateBg = document.getElementById('gate-bg');
 
+    // --- 待機画面の背景の設定 ---
     const BG_IMAGES = {
         default: 'url("https://min-chi.material.jp/mc/materials/background-c/building_hallway/building_hallway_1.jpg")',
         sr: 'url("https://min-chi.material.jp/mc/materials/background-c/building_hallway/building_hallway_2.jpg")',
         ssr: 'url("https://min-chi.material.jp/mc/materials/background-c/building_hallway/building_hallway_4.jpg")'
     };
+
+    // --- 効果音・BGMの設定 ---
+const sounds = {
+    tap: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/tap.mp3'), // ボタン押し
+    gateLoop: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/tap.mp3'), // 待機中BGM
+    gateTap: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/loop.mp3'), // 待機演出
+    cardSet: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/set.mp3'), // ★追加：カードが置かれる音
+    flipNormal: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/flip.mp3'), // R/SRめくり
+    Upgrade: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/flip.mp3'), // 昇格演出？
+    UpgradeDef: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/flip.mp3'), // 昇格演出！
+    ssrQuote: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/quote.mp3'), // SSRセリフ時（重低音）
+    ssrAppearance: new Audio('https://shun-mizuta.github.io/Gacha-Simulator/sounds/ssr.mp3') // SSR登場（キラキラ！）
+};
+
+// 待機中BGMはループさせる
+sounds.gateLoop.loop = true;
+sounds.gateLoop.volume = 0.5;
+
+// 音を鳴らすヘルパー関数
+function playSE(key) {
+    sounds[key].currentTime = 0; // 再生位置をリセットして連続再生対応
+    sounds[key].play().catch(e => console.log("音再生エラー:", e));
+}
 
     let lastCount = 1;
     let currentGachaResults = [];
@@ -182,6 +206,9 @@
         lastCount = count;
         currentGachaResults = []; 
 
+        playSE('tap');
+        sounds.gateLoop.play(); // ゲートのドキドキBGM開始
+        
         gateBg.classList.remove('gate-prepare', 'gate-zoom-in');
         
         // 1. 中身を全て抽選して保存する
@@ -242,6 +269,7 @@
 
         gateBg.classList.remove('gate-prepare');
         gateBg.classList.add('gate-zoom-in');
+        playSE('gateTap');
         
         await new Promise(r => setTimeout(r, 600));
         flashOverlay.classList.add('do-flash');
@@ -259,6 +287,7 @@
 
     async function startGacha(count) {
         const results = currentGachaResults; 
+        sounds.gateLoop.pause();
         
         // 演出用レアリティ判定
         let topRarity = "r";
@@ -287,12 +316,14 @@
             
             // 昇格演出
             if (item.isPromotion) {
+                playSE('Upgrade');
                 overlay.style.display = "flex";
                 overlay.className = "";
                 overlay.innerText = "！？";
                 overlay.style.color = "gold";
                 await new Promise(r => setTimeout(r, 600));
-                
+
+                playSE('UpgradeDef');
                 overlay.innerText = "SSRに昇格！！";
                 overlay.classList.add('ssr-effect');
                 await new Promise(r => setTimeout(r, 800));
@@ -326,6 +357,7 @@
             cardInner.appendChild(front);
             wrapper.appendChild(cardInner);
             resultContainer.appendChild(wrapper);
+            playSE('cardSet');
 
             await new Promise(r => setTimeout(r, 50));
             wrapper.classList.add('show-wrapper');
@@ -339,6 +371,7 @@
                 newOverlay.innerHTML = "";
 
                 if (item.rarity === "ssr") {
+                    playSE('ssrQuote');
                     newOverlay.style.background = "white"; 
                     const quoteDiv = document.createElement('div');
                     quoteDiv.className = 'quote-text';
@@ -353,6 +386,7 @@
                     body.classList.add('super-shake');
                     await new Promise(r => setTimeout(r, 1500));
                     body.classList.remove('super-shake');
+                    setTimeout(() => playSE('ssrAppearance'), 1500);
 
                     flashOverlay.classList.add('do-flash');
                     newOverlay.style.background = "rgba(0, 0, 0, 0.95)"; 
@@ -373,7 +407,7 @@
 
                 } else {
                     // NEW演出（RまたはSR）
-                    // レアリティがSRの時だけ 'back-sr' クラスを適用する
+                    setTimeout(() => playSE('flipNormal'), 100);
                     const backClass = (item.rarity === "sr") ? "back-sr" : "";
                     
                     newOverlay.innerHTML = `
@@ -397,6 +431,7 @@
                 await new Promise(resolve => { resolveGachaWait = resolve; });
                 cardInner.classList.add('is-flipped');
             } else {
+                setTimeout(() => playSE('flipNormal'), 100);
                 await new Promise(r => setTimeout(r, 100));
                 cardInner.classList.add('is-flipped');
             }
