@@ -175,9 +175,9 @@ function playSE(key) {
     const s = sounds[key];
     if (!s) return;
     
-    // 連続再生のために一旦停止してリセット
-    s.pause();
-    s.currentTime = 0;
+    // 元の音源をコピーして再生する（これで音が重なっても途切れない）
+    const newSound = s.cloneNode();
+    newSound.volume = s.volume;
     
     // playが拒否された時のエラーハンドリング
     const playPromise = s.play();
