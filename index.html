@@ -165,13 +165,13 @@
         .super-shake { animation: superShake 0.4s infinite; }
         @keyframes superShake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-3px, -2px); } 100% { transform: translate(2px, 2px); } }
 
-/* 詳細表示画面 */
+/* 詳細画面全体 */
 #single-card-display {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.95);
-    z-index: 5000; /* 最前面に */
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 5000;
     display: none;
     flex-direction: column;
     align-items: center;
@@ -179,62 +179,61 @@
     cursor: pointer;
 }
 
+/* カード外側のセリフ */
+.outside-quote {
+    font-size: 22px;
+    color: white;
+    font-style: italic;
+    text-shadow: 0 0 15px gold;
+    margin-bottom: 30px;
+    max-width: 80%;
+    text-align: center;
+    animation: fadeInDown 0.5s ease-out;
+}
+
+/* カード本体（枠の中は画像のみ） */
 .single-card-inner {
-    width: 300px !important;
-    height: 450px !important;
-    background: #222;
-    border-radius: 20px;
+    width: 260px !important;
+    height: 380px !important;
+    border-radius: 15px;
     position: relative;
     overflow: hidden;
     border: 3px solid #555;
-    box-shadow: 0 0 40px rgba(0,0,0,0.8);
+    background: #111;
 }
 
-/* 画像を背面に固定 */
-#card-detail-icon {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 1;
-}
-#card-detail-icon img {
-    width: 100%; height: 100%;
-    object-fit: cover;
+/* カード外側の情報 */
+.outside-info {
+    margin-top: 25px;
+    text-align: center;
+    animation: fadeInUp 0.5s ease-out;
 }
 
-/* 情報レイヤー（画像の上に載せる） */
-.detail-info-overlay {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 2; /* 画像(z-index:1)より上 */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 20px 0 0 0;
-    pointer-events: none; /* クリックを背面に通す */
-}
-
-/* セリフのデザイン */
-.detail-quote {
-    background: rgba(0, 0, 0, 0.5);
-    padding: 15px;
+#card-detail-rarity {
+    font-size: 40px;
+    font-weight: bold;
     font-style: italic;
-    font-size: 18px;
-    line-height: 1.4;
-    color: #fff;
-    text-shadow: 0 0 10px #000;
-    margin: 20px;
-    border-left: 4px solid gold;
+    letter-spacing: 4px;
+    margin-bottom: 5px;
 }
 
-/* 下部の黒い帯 */
-.detail-bottom-bar {
-    background: linear-gradient(transparent, rgba(0,0,0,0.9));
-    padding: 30px 10px 20px;
-    width: 100%;
-    box-sizing: border-box;
+#card-detail-name {
+    font-size: 24px;
+    color: white;
+    border-bottom: 2px solid rgba(255,255,255,0.3);
+    padding-bottom: 5px;
 }
+
+.tap-to-close {
+    margin-top: 40px;
+    color: #666;
+    letter-spacing: 2px;
+    font-size: 14px;
+}
+
+/* アニメーション */
+@keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
 #card-detail-rarity { font-size: 32px; font-weight: bold; margin-bottom: 5px; }
 #card-detail-name { font-size: 20px; color: #ddd; }
@@ -277,18 +276,18 @@
 </div>
 
 <div id="single-card-display" onclick="closeSingleCardDisplay()">
-    <div class="single-card-inner" id="detail-inner">
+    <div id="card-detail-quote" class="outside-quote"></div>
+
+    <div class="single-card-inner" id="detail-inner" onclick="event.stopPropagation()">
         <div id="card-detail-icon"></div>
-        
-        <div class="detail-info-overlay">
-            <div id="card-detail-quote" class="detail-quote"></div>
-            <div class="detail-bottom-bar">
-                <div id="card-detail-rarity"></div>
-                <div id="card-detail-name"></div>
-            </div>
-        </div>
     </div>
-    <div class="tap-to-close" style="margin-top:20px; z-index:3001;">- TOUCH TO CLOSE -</div>
+
+    <div class="outside-info">
+        <div id="card-detail-rarity"></div>
+        <div id="card-detail-name"></div>
+    </div>
+
+    <div class="tap-to-close">- TAP TO CLOSE -</div>
 </div>
 
 <script>
@@ -629,27 +628,31 @@ function playSE(key) {
     }
 
 function showDetail(item) {
-    // 1. 画像
-    document.getElementById('card-detail-icon').innerHTML = `<img src="${item.img}">`;
+    // 1. 画像をセット
+    document.getElementById('card-detail-icon').innerHTML = `<img src="${item.img}" style="width:100%; height:100%; object-fit:cover;">`;
     
-    // 2. セリフ
-    document.getElementById('card-detail-quote').innerText = item.quote ? `「${item.quote}」` : "";
+    // 2. カードの外側のセリフ
+    const quoteEl = document.getElementById('card-detail-quote');
+    quoteEl.innerText = item.quote ? `「${item.quote}」` : "";
+    // SSRの時だけセリフをより光らせる演出
+    quoteEl.style.textShadow = item.rarity === 'ssr' ? "0 0 15px gold" : "0 0 10px white";
     
     // 3. レアリティと名前
     const rarityLabel = document.getElementById('card-detail-rarity');
     rarityLabel.innerText = item.rarity.toUpperCase();
-    rarityLabel.style.color = item.rarity === 'ssr' ? 'gold' : (item.rarity === 'sr' ? '#f5576c' : 'white');
+    rarityLabel.style.color = item.rarity === 'ssr' ? 'gold' : (item.rarity === 'sr' ? '#f5576c' : '#ccc');
+    
     document.getElementById('card-detail-name').innerText = item.name;
 
-    // 4. 枠の光り
+    // 4. カード枠の光り
     const detailInner = document.getElementById('detail-inner');
     detailInner.className = `single-card-inner ${item.rarity}`;
     
-    // 5. 表示
+    // 5. 詳細表示をON
     document.getElementById('single-card-display').style.display = 'flex';
 }
 
-// 画面のどこをタップしても閉じるようにする
+// 閉じる
 function closeSingleCardDisplay() {
     document.getElementById('single-card-display').style.display = 'none';
 }
