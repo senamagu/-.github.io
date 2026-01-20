@@ -165,28 +165,43 @@
         .super-shake { animation: superShake 0.4s infinite; }
         @keyframes superShake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-3px, -2px); } 100% { transform: translate(2px, 2px); } }
 
-        /* 詳細表示の全体枠（黒背景の部分） */
+/* --- 詳細表示（プレビュー）画面 --- */
 #single-card-display {
-    background: rgba(0, 0, 0, 0.9); /* より暗くしてカードを際立たせる */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 3000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-/* 詳細表示のカード本体 */
+/* 詳細表示のメインカード枠 */
 .single-card-inner {
-    width: 300px;  /* サイズを大きく */
-    height: 420px; /* サイズを大きく */
+    width: 280px;  /* 大きく固定 */
+    height: 400px; /* 大きく固定 */
     background: #333;
     border-radius: 15px;
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-end; /* テキストを下寄せ */
-    position: relative;
-    overflow: visible; /* バッジ等があれば見えるように */
+    justify-content: flex-end; /* テキストを下へ */
+    overflow: hidden; /* 画像をマスク */
     border: 2px solid #555;
-    transition: transform 0.3s;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
 }
 
-/* 詳細画面でも画像を全面にマスクする */
+/* レアリティごとの境界線（一覧と干渉しないよう詳細専用に指定） */
+.single-card-inner.r   { border: 2px solid #666; }
+.single-card-inner.sr  { border: 3px solid #f5576c; box-shadow: 0 0 20px #f5576c; }
+.single-card-inner.ssr { border: 4px solid gold; box-shadow: 0 0 30px gold; }
+
+/* 画像を全面に広げるコンテナ */
 #card-detail-icon {
     position: absolute;
     top: 0;
@@ -194,24 +209,27 @@
     width: 100%;
     height: 100%;
     z-index: 1;
-    overflow: hidden;
-    border-radius: 13px; /* 親の角丸に合わせる */
 }
 
 #card-detail-icon img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* 全面表示 */
+    object-fit: cover; /* 全面マスク */
 }
 
-/* 詳細画面のテキスト情報 */
-#card-detail-rarity, #card-detail-name {
+/* 下部のテキスト情報帯 */
+.detail-info-bar {
     position: relative;
     z-index: 2;
     width: 100%;
     background: rgba(0, 0, 0, 0.7);
-    padding: 5px 0;
+    padding: 15px 0;
+    backdrop-filter: blur(5px);
 }
+
+#card-detail-rarity { font-size: 28px; font-weight: bold; margin-bottom: 5px; }
+#card-detail-name { font-size: 18px; color: #fff; }
+        
         .huge-card-wrapper { perspective: 1000px; margin-bottom: 20px; width: 200px; height: 280px; }
         #huge-card-inner { width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         
