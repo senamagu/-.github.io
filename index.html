@@ -264,11 +264,15 @@
 </div>
 
 <div id="single-card-display" onclick="closeSingleCardDisplay()">
-    <div class="single-card-inner r" id="detail-inner">
-        <div id="card-detail-icon" style="font-size: 80px;"></div>
-        <div id="card-detail-rarity" style="font-size: 24px; font-weight: bold; margin-top: 10px;"></div>
-        <div id="card-detail-name" style="font-size: 18px; color: #ccc;"></div>
+    <div class="single-card-inner" id="detail-inner">
+        <div id="card-detail-icon"></div>
+        
+        <div class="detail-info-bar">
+            <div id="card-detail-rarity"></div>
+            <div id="card-detail-name"></div>
+        </div>
     </div>
+    <div class="tap-to-close" style="margin-top:20px;">- TOUCH TO CLOSE -</div>
 </div>
 
 <script>
@@ -609,24 +613,31 @@ function playSE(key) {
     }
 
 function showDetail(item) {
-    // 画像をセット
-    document.getElementById('card-detail-icon').innerHTML = `
-        <img src="${item.img}">
-    `;
+    // 1. 画像をセット
+    document.getElementById('card-detail-icon').innerHTML = `<img src="${item.img}">`;
     
-    // テキスト情報をセット
-    document.getElementById('card-detail-rarity').innerText = item.rarity.toUpperCase();
-    document.getElementById('card-detail-rarity').style.color = 
-        item.rarity === 'ssr' ? 'gold' : (item.rarity === 'sr' ? '#f5576c' : 'white');
-        
+    // 2. テキスト情報をセット
+    const rarityLabel = document.getElementById('card-detail-rarity');
+    rarityLabel.innerText = item.rarity.toUpperCase();
+    
+    // レアリティで色を変える
+    if(item.rarity === 'ssr') rarityLabel.style.color = "gold";
+    else if(item.rarity === 'sr') rarityLabel.style.color = "#f5576c";
+    else rarityLabel.style.color = "white";
+
     document.getElementById('card-detail-name').innerText = item.name;
 
-    // レアリティに応じた光り（border）を付与
+    // 3. レアリティクラスを付与
     const detailInner = document.getElementById('detail-inner');
     detailInner.className = `single-card-inner ${item.rarity}`;
     
-    // 表示
+    // 4. 表示
     document.getElementById('single-card-display').style.display = 'flex';
+}
+
+// 閉じる関数
+function closeSingleCardDisplay() {
+    document.getElementById('single-card-display').style.display = 'none';
 }
 
     function toLobby() {
