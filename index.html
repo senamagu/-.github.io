@@ -168,7 +168,9 @@ const sounds = {
 // 待機中BGMはループさせる
 sounds.gateLoop.loop = true;
 sounds.gateLoop.volume = 0.5;
-
+// すべての音を事前にロードさせる（鳴らない問題の対策）
+Object.values(sounds).forEach(s => s.load());
+    
 // 音を鳴らすヘルパー関数
 function playSE(key) {
     sounds[key].currentTime = 0; // 再生位置をリセットして連続再生対応
