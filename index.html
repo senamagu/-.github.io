@@ -176,7 +176,8 @@
     };
 
     // ロビーから待機画面へ移動
-if (isGachaProcessing) return; // ★実行中は準備させない
+    function prepareGacha(count) {  // ← この一行が抜けていました！
+    if (isGachaProcessing) return; // ★実行中は準備させない
         
         lastCount = count;
         gateBg.classList.remove('gate-prepare', 'gate-zoom-in');
@@ -285,6 +286,8 @@ if (isGachaProcessing) return; // ★実行中は準備させない
                 await new Promise(r => setTimeout(r, 800));
                 overlay.style.display = "none";
             }
+
+            isGachaProcessing = false; // ★ここに入れるのが一番安全です！
 
             const wrapper = document.createElement('div');
             wrapper.className = "card-wrapper";
