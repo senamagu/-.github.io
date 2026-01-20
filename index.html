@@ -174,16 +174,23 @@ Object.values(sounds).forEach(s => s.load());
 function playSE(key) {
     const s = sounds[key];
     if (!s) return;
+
+    // 1. 元のソースURLを使って、その場限りの新しいAudioオブジェクトを作る
+    const tempSound = new Audio(s.src);
+    tempSound.volume = s.volume;
+
+    // 2. 再生が終わったらメモリ解放のために破棄する設定
+    tempSound.onended = function() {
+        tempSound.remove();
+    };
+
+    // 3. 即座に再生
+    const playPromise = tempSound.play();
     
-    // 元の音源をコピーして再生する（これで音が重なっても途切れない）
-    const newSound = s.cloneNode();
-    newSound.volume = s.volume;
-    
-    // playが拒否された時のエラーハンドリング
-    const playPromise = s.play();
     if (playPromise !== undefined) {
         playPromise.catch(error => {
-            console.log("再生ブロックされました:", error);
+            // 自動再生ポリシーでブロックされた場合など
+            console.log("再生がブロックされました:", error);
         });
     }
 }
@@ -372,7 +379,7 @@ function playSE(key) {
             resultContainer.appendChild(wrapper);
             playSE('cardSet');
 
-            await new Promise(r => setTimeout(r, 50));
+            await new Promise(r => setTimeout(r, 80));
             wrapper.classList.add('show-wrapper');
             await new Promise(r => setTimeout(r, 300 / count));
 
