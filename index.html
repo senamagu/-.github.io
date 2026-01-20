@@ -165,70 +165,83 @@
         .super-shake { animation: superShake 0.4s infinite; }
         @keyframes superShake { 0% { transform: translate(2px, 2px); } 50% { transform: translate(-3px, -2px); } 100% { transform: translate(2px, 2px); } }
 
-/* --- 詳細表示（プレビュー）画面 --- */
+/* 詳細表示画面 */
 #single-card-display {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.9);
-    z-index: 3000;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 5000; /* 最前面に */
     display: none;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
 }
 
-/* 詳細表示のメインカード枠 */
 .single-card-inner {
-    width: 280px;  /* 大きく固定 */
-    height: 400px; /* 大きく固定 */
-    background: #333;
-    border-radius: 15px;
+    width: 300px !important;
+    height: 450px !important;
+    background: #222;
+    border-radius: 20px;
     position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end; /* テキストを下へ */
-    overflow: hidden; /* 画像をマスク */
-    border: 2px solid #555;
-    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    overflow: hidden;
+    border: 3px solid #555;
+    box-shadow: 0 0 40px rgba(0,0,0,0.8);
 }
 
-/* レアリティごとの境界線（一覧と干渉しないよう詳細専用に指定） */
-.single-card-inner.r   { border: 2px solid #666; }
-.single-card-inner.sr  { border: 3px solid #f5576c; box-shadow: 0 0 20px #f5576c; }
-.single-card-inner.ssr { border: 4px solid gold; box-shadow: 0 0 30px gold; }
-
-/* 画像を全面に広げるコンテナ */
+/* 画像を背面に固定 */
 #card-detail-icon {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     z-index: 1;
 }
-
 #card-detail-icon img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* 全面マスク */
+    width: 100%; height: 100%;
+    object-fit: cover;
 }
 
-/* 下部のテキスト情報帯 */
-.detail-info-bar {
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 15px 0;
-    backdrop-filter: blur(5px);
+/* 情報レイヤー（画像の上に載せる） */
+.detail-info-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 2; /* 画像(z-index:1)より上 */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px 0 0 0;
+    pointer-events: none; /* クリックを背面に通す */
 }
 
-#card-detail-rarity { font-size: 28px; font-weight: bold; margin-bottom: 5px; }
-#card-detail-name { font-size: 18px; color: #fff; }
+/* セリフのデザイン */
+.detail-quote {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 15px;
+    font-style: italic;
+    font-size: 18px;
+    line-height: 1.4;
+    color: #fff;
+    text-shadow: 0 0 10px #000;
+    margin: 20px;
+    border-left: 4px solid gold;
+}
+
+/* 下部の黒い帯 */
+.detail-bottom-bar {
+    background: linear-gradient(transparent, rgba(0,0,0,0.9));
+    padding: 30px 10px 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#card-detail-rarity { font-size: 32px; font-weight: bold; margin-bottom: 5px; }
+#card-detail-name { font-size: 20px; color: #ddd; }
+
+/* レアリティ別の光 */
+.single-card-inner.ssr { border-color: gold; box-shadow: 0 0 30px gold; }
+.single-card-inner.sr  { border-color: #f5576c; box-shadow: 0 0 20px #f5576c; }
         
         .huge-card-wrapper { perspective: 1000px; margin-bottom: 20px; width: 200px; height: 280px; }
         #huge-card-inner { width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -267,12 +280,15 @@
     <div class="single-card-inner" id="detail-inner">
         <div id="card-detail-icon"></div>
         
-        <div class="detail-info-bar">
-            <div id="card-detail-rarity"></div>
-            <div id="card-detail-name"></div>
+        <div class="detail-info-overlay">
+            <div id="card-detail-quote" class="detail-quote"></div>
+            <div class="detail-bottom-bar">
+                <div id="card-detail-rarity"></div>
+                <div id="card-detail-name"></div>
+            </div>
         </div>
     </div>
-    <div class="tap-to-close" style="margin-top:20px;">- TOUCH TO CLOSE -</div>
+    <div class="tap-to-close" style="margin-top:20px; z-index:3001;">- TOUCH TO CLOSE -</div>
 </div>
 
 <script>
@@ -613,29 +629,27 @@ function playSE(key) {
     }
 
 function showDetail(item) {
-    // 1. 画像をセット
+    // 1. 画像
     document.getElementById('card-detail-icon').innerHTML = `<img src="${item.img}">`;
     
-    // 2. テキスト情報をセット
+    // 2. セリフ
+    document.getElementById('card-detail-quote').innerText = item.quote ? `「${item.quote}」` : "";
+    
+    // 3. レアリティと名前
     const rarityLabel = document.getElementById('card-detail-rarity');
     rarityLabel.innerText = item.rarity.toUpperCase();
-    
-    // レアリティで色を変える
-    if(item.rarity === 'ssr') rarityLabel.style.color = "gold";
-    else if(item.rarity === 'sr') rarityLabel.style.color = "#f5576c";
-    else rarityLabel.style.color = "white";
-
+    rarityLabel.style.color = item.rarity === 'ssr' ? 'gold' : (item.rarity === 'sr' ? '#f5576c' : 'white');
     document.getElementById('card-detail-name').innerText = item.name;
 
-    // 3. レアリティクラスを付与
+    // 4. 枠の光り
     const detailInner = document.getElementById('detail-inner');
     detailInner.className = `single-card-inner ${item.rarity}`;
     
-    // 4. 表示
+    // 5. 表示
     document.getElementById('single-card-display').style.display = 'flex';
 }
 
-// 閉じる関数
+// 画面のどこをタップしても閉じるようにする
 function closeSingleCardDisplay() {
     document.getElementById('single-card-display').style.display = 'none';
 }
