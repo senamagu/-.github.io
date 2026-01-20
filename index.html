@@ -277,18 +277,6 @@
         document.getElementById('gate-screen').classList.remove('active');
         await new Promise(r => setTimeout(r, 600));
 
-        if (topRarity === "ssr") {
-            overlay.innerText = "超絶激レア反応！！";
-            overlay.classList.add('ssr-effect');
-            flashOverlay.classList.add('do-flash');
-            setTimeout(() => flashOverlay.classList.remove('do-flash'), 500);
-            await new Promise(r => setTimeout(r, 1500));
-        } else if (topRarity === "sr") {
-            overlay.innerText = "高エネルギー反応！";
-            overlay.classList.add('rare-effect');
-            await new Promise(r => setTimeout(r, 1000));
-        }
-
         overlay.style.display = "none";
         document.getElementById('result-screen').classList.add('active');
         resultContainer.innerHTML = "";
