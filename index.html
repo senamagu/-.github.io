@@ -295,7 +295,9 @@
     <div id="card-detail-quote" class="outside-quote"></div>
 
     <div class="single-card-inner" id="detail-inner" onclick="event.stopPropagation()">
-        <div id="card-detail-icon"></div>
+        <div id="card-detail-icon">
+            <img id="detail-img-element" src="" style="width:100%; height:100%; object-fit:cover;">
+        </div>
     </div>
 
     <div class="outside-info">
@@ -644,39 +646,28 @@ function playSE(key) {
     }
 
 function showDetail(item) {
-    // 1. 画像
-    document.getElementById('card-detail-icon').innerHTML = `<img src="${item.img}">`;
+    // 1. 画像のsrcを直接変更（innerHTMLより高速）
+    document.getElementById('detail-img-element').src = item.img;
     
     // 2. セリフ
     const quoteEl = document.getElementById('card-detail-quote');
     quoteEl.innerText = item.quote ? `「${item.quote}」` : "";
-    quoteEl.style.textShadow = item.rarity === 'ssr' ? "0 0 20px gold" : "0 0 10px white";
     
     // 3. レアリティ
     const rarityLabel = document.getElementById('card-detail-rarity');
     rarityLabel.innerText = item.rarity.toUpperCase();
-    if(item.rarity === 'ssr') {
-        rarityLabel.style.color = 'gold';
-        rarityLabel.style.textShadow = "0 0 15px orange";
-    } else if(item.rarity === 'sr') {
-        rarityLabel.style.color = '#f5576c';
-        rarityLabel.style.textShadow = "0 0 10px #f5576c";
-    } else {
-        rarityLabel.style.color = '#ccc';
-        rarityLabel.style.textShadow = "none";
-    }
     
     // 4. 名前
     document.getElementById('card-detail-name').innerText = item.name;
 
-    // 5. クラス付与（枠を光らせる）
+    // 5. 枠のレアリティクラスを更新
     const detailInner = document.getElementById('detail-inner');
     detailInner.className = `single-card-inner ${item.rarity}`;
     
-    // 6. 表示開始
+    // 6. 表示（即座に表示させるため、余計な処理を挟まない）
     document.getElementById('single-card-display').style.display = 'flex';
 }
-
+    
 // 閉じる
 function closeSingleCardDisplay() {
     document.getElementById('single-card-display').style.display = 'none';
