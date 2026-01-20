@@ -58,25 +58,50 @@
         .is-flipped { transform: rotateY(180deg); }
         .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .card-back { background: #444; border: 2px solid #666; background-image: repeating-linear-gradient(45deg, #333 0, #333 10px, #444 10px, #444 20px); }
-        .card-front {
-            transform: rotateY(180deg);
-            background: #333;
-            overflow: hidden; /* 画像が角丸からはみ出ないようにマスク */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end; /* テキストを下に寄せる */
-        }
+        /* 修正：表面のoverflowを外す（バッジがはみ出せるようにするため） */
+.card-front {
+    transform: rotateY(180deg);
+    background: #333;
+    /* overflow: hidden;  ←これを消すかコメントアウト */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative; /* バッジの基準点 */
+}
 
-        /* 画像をカード全面に広げる */
-.card-img {
+/* 修正：画像専用のマスク用クラスを追加 */
+.card-img-container {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover; /* 枠いっぱいに広げる */
+    overflow: hidden; /* 画像だけをここでマスクする */
+    border-radius: 8px; /* カードの角丸に合わせる */
     z-index: 1;
+}
+
+.card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 修正：NEWバッジのz-indexを上げて最前面に */
+.new-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #00bcd4;
+    color: white;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: bold;
+    transform: rotate(15deg);
+    z-index: 10; /* 画像や情報バーより上にする */
+    box-shadow: 0 0 10px rgba(0,0,0,0.5); /* 視認性アップ */
 }
 
 /* レアリティ文字などの情報を画像の上に浮かせる */
@@ -415,13 +440,15 @@ function playSE(key) {
             const front = document.createElement('div');
             front.className = `card-front ${item.rarity}`;
             front.innerHTML = `
-                <img src="${item.img}" class="card-img">
-                <div class="card-info">
-                    <div style="font-weight: bold;">${item.rarity.toUpperCase()}</div>
-                    <div style="font-size: 10px;">${item.name}</div>
-                </div>
-                ${item.isNew ? '<div class="new-badge">NEW!</div>' : ''}
-            `;
+    <div class="card-img-container">
+        <img src="${item.img}" class="card-img">
+    </div>
+    <div class="card-info">
+        <div style="font-weight: bold;">${item.rarity.toUpperCase()}</div>
+        <div style="font-size: 10px;">${item.name}</div>
+    </div>
+    ${item.isNew ? '<div class="new-badge">NEW!</div>' : ''}
+`;
 
             cardInner.appendChild(back);
             cardInner.appendChild(front);
