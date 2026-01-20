@@ -106,7 +106,7 @@
 <div id="new-character-overlay" onclick="resumeGacha()"></div>
 
 <div id="lobby-screen" class="screen active">
-    <h1>伝説の召喚</h1>
+    <h1>テストガチャ</h1>
     <div class="btn-group">
         <button onclick="prepareGacha(1)">1回召喚</button>
         <button onclick="prepareGacha(10)" style="background: #ffaa00; color: white;">10回召喚</button>
@@ -241,7 +241,7 @@ function playSE(key) {
             if (rand < 0.05) {
                 rarity = "ssr";
                 // SSRの場合、10%で「昇格演出」にする
-                if (Math.random() < 1) { 
+                if (Math.random() < 0.10) { 
                     isPromotion = true; 
                 }
             } else if (rand < 0.25) {
